@@ -13,7 +13,7 @@ export default class Page extends React.Component<{ posts: Array<Post> }> {
             <header>
                 <h1>{process.env.NEXT_PUBLIC_BLOG_TITLE}</h1>
                 <span>{posts.length} Posts</span>
-                <span><Link href="/about/"><a>About</a></Link></span>
+                <span><Link href="/about/">About</Link></span>
             </header>
             <main>
                 <ul className="posts">

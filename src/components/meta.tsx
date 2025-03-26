@@ -6,6 +6,7 @@ interface MetaProps {
     url?: string;
     description?: string;
     image?: string;
+    children?: React.ReactNode;
 }
 
 /** Meta generates meta-information to be included into the final page */

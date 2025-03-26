@@ -20,8 +20,8 @@ export default class Posting extends React.Component<{ post: Post }> {
                 </span>}
                 
                 <nav aria-label="Navigation" itemScope itemType="https://schema.org/SiteNavigationElement">
-                    <span><Link href="/"><a itemProp="url">Home</a></Link></span>
-                    <span><Link href="/about/"><a itemProp="url">About</a></Link></span>
+                    <span><Link href="/" itemProp="url">Home</Link></span>
+                    <span><Link legacyBehavior href="/about/" itemProp="url">About</Link></span>
                 </nav>
             </header>
             <main dangerouslySetInnerHTML={{ __html: html }} />

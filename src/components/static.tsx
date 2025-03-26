@@ -11,7 +11,7 @@ export default class StaticPage extends React.Component<{ title: string, html: s
                 <h1 itemProp="name headline">{title}</h1>
                 <span>{title}</span>
                 <nav aria-label="Navigation" itemScope itemType="https://schema.org/SiteNavigationElement">
-                    <span><Link href="/"><a itemProp="url">Home</a></Link></span>
+                    <span><Link href="/" itemProp="url">Home</Link></span>
                 </nav>
             </header>
             <main dangerouslySetInnerHTML={{ __html: html }} />

@@ -4,25 +4,29 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && next export",
+    "build": "next build",
     "start": "next start",
     "deploy": "yarn build && gh-pages --dist out --no-history --dotfiles"
   },
   "dependencies": {
     "gray-matter": "^4.0.3",
-    "next": "^12.1.0",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
+    "next": "^15.2.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "remark": "^13.0.0",
     "remark-external-links": "^8.0.0",
     "remark-html": "^13.0.2"
   },
   "devDependencies": {
-    "@types/node": "^16.0.0",
-    "@types/react": "^17.0.13",
-    "eslint": "^7.30.0",
-    "eslint-config-next": "^11.0.1",
-    "gh-pages": "^3.2.3",
-    "typescript": "^4.3.5"
+    "@types/node": "^22.13.13",
+    "@types/react": "^19.0.12",
+    "eslint": "^9.23.0",
+    "eslint-config-next": "^15.2.4",
+    "gh-pages": "^6.3.0",
+    "typescript": "^5.8.2"
+  },
+  "resolutions": {
+    "braces": ">=3.0.3",
+    "micromatch": ">=4.0.0"
   }
 }
