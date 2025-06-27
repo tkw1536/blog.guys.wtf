@@ -82,10 +82,10 @@ func main() {
 			lDate, _ := left.Meta["date"].(string)
 			rDate, _ := right.Meta["date"].(string)
 
-			// sort first by path, then by date
+			// sort first by date, then by path
 			return cmp.Or(
-				strings.Compare(left.Path, right.Path),
 				strings.Compare(rDate, lDate),
+				strings.Compare(left.Path, right.Path),
 			)
 		})
 	}()
