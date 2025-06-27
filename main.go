@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"log"
@@ -67,7 +68,7 @@ func main() {
 		}
 	}()
 
-	// retrieve indexed objects
+	// retrieve and sort indexed pages
 	indexed := make([]Indexed, 0)
 	buildWg.Add(1)
 	go func() {
@@ -80,11 +81,16 @@ func main() {
 		slices.SortFunc(indexed, func(left, right Indexed) int {
 			lDate, _ := left.Meta["date"].(string)
 			rDate, _ := right.Meta["date"].(string)
-			return strings.Compare(rDate, lDate)
+
+			// sort first by path, then by date
+			return cmp.Or(
+				strings.Compare(left.Path, right.Path),
+				strings.Compare(rDate, lDate),
+			)
 		})
 	}()
 
-	// close files when done building
+	// render the index page, then close the files to signal completion
 	go func() {
 		buildWg.Wait()
 		defer close(files)

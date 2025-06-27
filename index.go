@@ -10,11 +10,13 @@ import (
 	_ "embed"
 )
 
+// Indexed is an indexed blog page.
 type Indexed struct {
 	Path string
 	Meta map[string]any
 }
 
+// Link returns a nice link to this page.
 func (index Indexed) Link() string {
 	noIndex := strings.TrimSuffix(index.Path, "/index.html")
 	return strings.TrimSuffix(noIndex, "/") + "/"
@@ -24,6 +26,7 @@ func (index Indexed) Link() string {
 var listHTML string
 var listTemplate = template.Must(template.New("list.html").Funcs(templateFuncs).Parse(listHTML))
 
+// Render the index page
 func RenderIndex(ctx context.Context, logger *log.Logger, indexed []Indexed, template *Template) File {
 	var out bytes.Buffer
 	if err := listTemplate.Execute(&out, indexed); err != nil {
