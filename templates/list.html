@@ -1,0 +1,18 @@
+<p>
+    My <a href="https://tkw01536.de/">personal</a> blog about random topics I am interested in related to programming.
+    Also contains a historic post by a friend. 
+</p>
+<hr>
+
+<ul class="posts">
+    {{ range . }}
+        {{ if .Meta.title }}
+            <li>
+                <a href="{{ .Link }}">{{ .Meta.title }}</a>
+    
+                {{ if .Meta.date }} <span>{{ date .Meta.date}}</span> {{ end }}
+                {{ if .Meta.author }} <span>{{ .Meta.author }}</span> {{ end }}
+            </li>
+        {{ end }}
+    {{ end }}
+</ul>

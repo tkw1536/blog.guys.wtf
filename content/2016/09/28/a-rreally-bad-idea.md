@@ -1,7 +1,8 @@
 ---
-title:  "A Rreally bad idea"
-date:   "2016-09-28"
-author: tkw01536
+title:      A Rreally bad idea
+date:       2016-09-28
+author:     Tom Wiesing 
+authorLink: https://tkw01536.de
 ---
 
 [R](https://www.r-project.org/) is a tool for statistical modelers and social scientists to be able to make statistical computations. As such I have come across it in the context of statistical modelling. I consider myself an experienced programmer and when I was first thrown at R I had quite some problems with it.

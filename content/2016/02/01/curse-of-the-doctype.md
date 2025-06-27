@@ -1,8 +1,10 @@
 ---
-title:  "Curse of the !DOCTYPE"
-date:   "2016-02-01"
-author: thunderboltsid
+title:      Curse of the !DOCTYPE
+date:       2016-02-01
+author:     thunderboltsid
+authorLink: https://github.com/thunderboltsid
 ---
+
 DOCTYPE: The enigmatic syntactical declaration that’s forced down the throat of amateur web developers and designers without much understanding of what it implies. Sure, some person might’ve mentioned that it means document type, which is true, in a way, it does not quite reflect it’s true idea.
 
 Presence or Absence of a DOCTYPE can lead to interesting and unpredictable (but not unforeseen) results. This started off at my previous internship. I was working on a visualization intensive web application that was supposed to help the company with better decision making. This was a typical django stack  with Angular.JS for the frontend, Postgres for database needs, and memcached for caching. One fine day, while refactoring the home page into a separate base layer  comprising of only the staticfiles (CSS + JS) which other pages can import, I broke the whole application.

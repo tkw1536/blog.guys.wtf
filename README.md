@@ -1,3 +1,3 @@
 ## blog.guys.wtf
 
-Install using yarn, deploy using ```yarn deploy```
+Build using "go build ."
