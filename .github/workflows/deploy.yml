@@ -11,7 +11,6 @@ permissions:
 
 jobs:
   build:
-    # Specify runner +  build & upload the static files as an artifact
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
