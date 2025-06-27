@@ -5,8 +5,14 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"regexp"
 	"time"
 
+	"github.com/tdewolff/minify/v2"
+	"github.com/tdewolff/minify/v2/css"
+	mHTML "github.com/tdewolff/minify/v2/html"
+	"github.com/tdewolff/minify/v2/js"
+	"github.com/tdewolff/minify/v2/svg"
 	"github.com/yuin/goldmark"
 	meta "github.com/yuin/goldmark-meta"
 	"github.com/yuin/goldmark/parser"
@@ -89,6 +95,16 @@ type TplContext struct {
 	Common  map[string]any
 }
 
+var m *minify.M
+
+func init() {
+	m = minify.New()
+	m.AddFunc("text/html", mHTML.Minify)
+	m.AddFunc("text/css", css.Minify)
+	m.AddFunc("image/svg+xml", svg.Minify)
+	m.AddFuncRegexp(regexp.MustCompile("^(application|text)/(x-)?(java|ecma)script$"), js.Minify)
+}
+
 // Renders the template, returning content and metadata
 func (tpl *Template) Render(content []byte, metaIn map[string]any) ([]byte, map[string]any, error) {
 	context := parser.NewContext()
@@ -109,8 +125,8 @@ func (tpl *Template) Render(content []byte, metaIn map[string]any) ([]byte, map[
 		content = outBuffer.Bytes()
 	}
 
-	var outBuffer bytes.Buffer
-	if err := tpl.tpl.Execute(&outBuffer, TplContext{
+	var htmlBuffer bytes.Buffer
+	if err := tpl.tpl.Execute(&htmlBuffer, TplContext{
 		Content: template.HTML(content),
 		Meta:    metaIn,
 		Common:  tpl.common,
@@ -118,7 +134,12 @@ func (tpl *Template) Render(content []byte, metaIn map[string]any) ([]byte, map[
 		return nil, nil, fmt.Errorf("failed to render template: %w", err)
 	}
 
-	return outBuffer.Bytes(), metaIn, nil
+	var minifyBuffer bytes.Buffer
+	if err := m.Minify("text/html", &minifyBuffer, &htmlBuffer); err != nil {
+		return nil, nil, fmt.Errorf("failed to minify: %w", err)
+	}
+
+	return minifyBuffer.Bytes(), metaIn, nil
 }
 
 // addRelToLinks adds rel="noopener noreferrer" to all links in the given HTML string.

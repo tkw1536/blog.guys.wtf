@@ -1,25 +1,24 @@
 <!DOCTYPE html>
 <html lang="en" itemscope="" itemtype="http://schema.org/WebPage" prefix="og: http://ogp.me/ns#">
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <script async src="https://inform.everyone.wtf/legal.min.js?float"></script>
+        <script async src="https://inform.everyone.wtf/legal.min.js?float"></script>
 
-    {{ $title := .Common.BlogTitle }}{{ if .Meta.title }}{{ $title = print .Meta.title " | " $title }}{{ end }}
-    <title>{{ $title }}</title>
-    <meta name="og:type" content="website">
-    <meta itemprop="name" content="{{ $title }}">
-    <meta name="og:title" content="{{ $title }}">
-    <meta property="twitter:title" content="{{ $title }}">
+        {{ $title := .Common.BlogTitle }}{{ if .Meta.title }}{{ $title = print .Meta.title " | " $title }}{{ end }}
+        <title>{{ $title }}</title>
+        <meta name="og:type" content="website">
+        <meta itemprop="name" content="{{ $title }}">
+        <meta name="og:title" content="{{ $title }}">
+        <meta property="twitter:title" content="{{ $title }}">
 
-    <link rel="stylesheet" href="/styles/latex.css">
-    <link rel="stylesheet" href="/styles/global.css">
-</head>
+        <link rel="stylesheet" href="/styles/latex.css">
+        <link rel="stylesheet" href="/styles/global.css">
+    </head>
 
-<body>
-    <div>
+    <body>
         <article itemscope="" itemtype="https://schema.org/Blog">
             <header>
                 {{ $heading := .Common.BlogTitle }}{{ if .Meta.title }}{{ $heading = .Meta.title }}{{ end }}
@@ -27,9 +26,7 @@
 
                 {{ if .Meta.date }}
                 <span>
-                    <time datetime="{{ .Meta.date }}" itemprop="datePublished">
-                        {{ date .Meta.date }}
-                    </time>
+                    <time datetime="{{ .Meta.date }}" itemprop="datePublished">{{ date .Meta.date }}</time>
                 </span>
                 {{ end }}
                     
@@ -41,7 +38,6 @@
                             {{ else }}
                                 {{ .Meta.author }}
                             {{ end }}
-
                         </span>
                     </span>
                 {{ end }}
@@ -56,7 +52,6 @@
                 {{ .Content }}
             </main>
         </article>
-    </div>
-</body>
+    </body>
 
 </html>
