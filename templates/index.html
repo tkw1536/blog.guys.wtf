@@ -17,6 +17,7 @@
         {{ if $description }}<meta property="og:description" content="{{ $description }}">{{ end }}
         {{ if $image }}<meta name="og:image" content="{{ $image }}">{{ end }}
         {{ if $url }}<meta name="og:url" content="{{ $url }}">{{ end }}
+        <meta name="og:site_name" content="{{ .Template.Globals.BlogTitle }}">
 
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="{{ $title }}">
@@ -51,7 +52,7 @@
                     <span itemprop="author" itemscope="" itemtype="https://schema.org/Person">
                         <span itemprop="name">
                             {{ if .File.Metadata.authorLink }}
-                                <a href="{{ .File.Metadata.authorLink }}">{{ .File.Metadata.author }}</a>
+                                <a href="{{ .File.Metadata.authorLink }}" rel="author">{{ .File.Metadata.author }}</a>
                             {{ else }}
                                 {{ .File.Metadata.author }}
                             {{ end }}
