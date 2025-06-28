@@ -24,6 +24,16 @@
         {{ if $description }}<meta name="twitter:description" content="{{ $description }}">{{ end }}
         {{ if $image }}<meta name="twitter:image" content="{{ $image }}">{{ end }}
         {{ if $url }}<meta name="twitter:url" content="{{ $url }}">{{ end }}
+        
+        {{ if .File.Metadata.author }}
+            <meta property="article:author" content="{{ .File.Metadata.author }}">
+            {{ if .File.Metadata.authorLink }}
+                <meta property="article:author:url" content="{{ .File.Metadata.authorLink }}">
+            {{ end }}
+        {{ end }}
+        {{ if .File.Metadata.date }}
+            <meta property="article:published_time" content="{{ .File.Metadata.date }}">
+        {{ end }}
 
         <link rel="stylesheet" href="/styles/latex.css">
         <link rel="stylesheet" href="/styles/global.css">
