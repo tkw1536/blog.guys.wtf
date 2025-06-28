@@ -5,14 +5,18 @@
 <hr>
 
 <ul class="posts">
-    {{ range . }}
-        {{ if .Meta.title }}
+    {{ range .Entries }}
+        {{ if and .Metadata .Metadata.title }}
             <li>
-                <a href="{{ .Link }}">{{ .Meta.title }}</a>
+                <a href="{{ .Link }}">{{ .Metadata.title }}</a>
     
-                {{ if .Meta.date }} <span>{{ date .Meta.date}}</span> {{ end }}
-                {{ if .Meta.author }} <span>{{ .Meta.author }}</span> {{ end }}
+                {{ if .Metadata.date }} <span>{{ date .Metadata.date}}</span> {{ end }}
+                {{ if .Metadata.author }} <span>{{ .Metadata.author }}</span> {{ end }}
             </li>
+        {{ else }}
+            <li>
+                <a href="{{ .Link }}">{{ .Link }}</a>
+            </li> 
         {{ end }}
     {{ end }}
 </ul>

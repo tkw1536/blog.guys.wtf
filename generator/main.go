@@ -2,9 +2,8 @@ package generator
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"html/template"
-	"io/fs"
 	"log/slog"
 	"sync"
 )
@@ -14,23 +13,22 @@ type Generator struct {
 	// Inputs are inputs to the generator.
 	Inputs []Scanner
 
-	Contents fs.FS // Contents will be processed as markdown.
-	Static   fs.FS // Static will be copied as is.
-
-	// Called by index generation to process indexed files.
+	// Indexes are special templates which are passed all previously generated files.
+	Indexes          []IndexTemplate
 	IndexCompareFunc IndexComparisonFunc
 
-	// Indexes are templates that are generated after all other files have been processed.
-	// The map should map a filename to the template used to render it.
-	Indexes map[string]*template.Template
+	// ContentTemplate is the template applied to all non-raw files.
+	ContentTemplate ContentTemplate
 
-	// ContentTemplate is the Template to use for all final output.
-	// It is passed an [HTMLTemplateContext].
-	ContentTemplate *Template
+	// PostProcessors are applied to all files.
+	// They are applied in order to each file being output.
+	PostProcessors []PostProcessor
 
 	// Output is used to write output files.
 	Output FileWriter
 }
+
+var errRecursiveIndex = errors.New("indexer produced file to be indexed: not allowed")
 
 // Run runs the static site generator with the given context, logging to the given logger.
 //
@@ -58,100 +56,128 @@ func (generator *Generator) Run(ctx context.Context, logger *slog.Logger) error 
 	}
 
 	var (
-		buildWg sync.WaitGroup
-		inputWg sync.WaitGroup
+		inputs         = make(chan ScannedFile) // inputs from the inputs
+		inputProducers sync.WaitGroup           // waits for anything writing to inputs
 
-		files  = make(chan File)
-		inputs = make(chan ScannedFile)
-		index  = make(chan Indexed)
+		contents         = make(chan ContentFile) // non-raw files to be wrapped in ContentTemplate
+		contentProducers sync.WaitGroup           // waits for anything writing to the contents
+
+		index          = make(chan ScannedFile)
+		indexProducers sync.WaitGroup // anything producing an index entry
+
+		posts         = make(chan File) // outputs to be post-processed
+		postProducers sync.WaitGroup    // waits for anything producing post-processing output
+
+		outputs         = make(chan File) // final outputs
+		outputProducers sync.WaitGroup    // anything producing final output
 	)
 
-	for _, scanner := range generator.Inputs {
-		buildWg.Add(1)
-		inputWg.Add(1)
+	// start all the inputs
+	for i, scanner := range generator.Inputs {
+		inputProducers.Add(1)
 		go func() {
-			defer buildWg.Done()
-			defer inputWg.Done()
+			defer inputProducers.Done()
 
-			if err := scanner(ctx, logger, inputs); err != nil {
-				registerError(fmt.Errorf("scanner %v failed: %w", scanner, err))
+			if err := scanner(ourContext, logger, inputs); err != nil {
+				registerError(fmt.Errorf("scanner %d failed to scan: %w", i, err))
 			}
 		}()
 	}
 
-	// close the inputs channel once we're done!
+	// build indexes if needed
+	postProducers.Add(1)
+	contentProducers.Add(1)
+	indexProducers.Add(1)
 	go func() {
-		defer inputWg.Wait()
-		close(inputs)
-	}()
+		defer postProducers.Done()
+		defer contentProducers.Done()
+		defer indexProducers.Done()
 
-	var indexedInputs []Indexed
-
-	buildWg.Add(1)
-	go func() {
-		defer buildWg.Done()
-
-		for input := range inputs {
-			if !input.Indexed {
-				continue
+		var indexed []IndexEntry
+		for result := range inputs {
+			if result.Raw {
+				posts <- result.File
+			} else {
+				contents <- result.ContentFile
 			}
-			indexedInputs = append(indexedInputs, Indexed{
-				Path: input.Path,
-				Meta: input.Metadata,
-			})
+
+			if result.Indexed {
+				indexed = append(indexed, IndexEntry{Path: result.Path, Metadata: result.Metadata})
+			}
 		}
+
+		if err := generator.renderIndexes(ourContext, logger, indexed, index); err != nil {
+			registerError(fmt.Errorf("failed to render indexes: %w", err))
+		}
+	}()
+
+	contentProducers.Add(1)
+	postProducers.Add(1)
+	go func() {
+		defer contentProducers.Done()
+		defer postProducers.Done()
+
+		for result := range index {
+			if result.Indexed {
+				registerError(errRecursiveIndex)
+				return
+			}
+			if result.Raw {
+				posts <- result.File
+			} else {
+				contents <- result.ContentFile
+			}
+		}
+	}()
+
+	// run the content template where needed
+	postProducers.Add(1)
+	go func() {
+		defer postProducers.Done()
+
+		if err := generator.renderContents(ourContext, logger, posts, contents); err != nil {
+			registerError(fmt.Errorf("failed to render contents: %w", err))
+		}
+	}()
+
+	// produce final outputs
+	outputProducers.Add(1)
+	go func() {
+		defer outputProducers.Done()
+
+		if err := generator.postProcess(ourContext, logger, outputs, posts); err != nil {
+			registerError(fmt.Errorf("failed to post process: %w", err))
+		}
+	}()
+
+	go func() {
+		defer close(inputs)
+		inputProducers.Wait()
+	}()
+
+	go func() {
+		defer close(contents)
+		contentProducers.Wait()
 
 	}()
 
-	// build the static directory
-	buildWg.Add(1)
 	go func() {
-		defer buildWg.Done()
+		defer close(posts)
+		postProducers.Wait()
+	}()
+
+	go func() {
 		defer close(index)
-
-		if err := generator.scanStatic(ourContext, logger, files); err != nil {
-			registerError(fmt.Errorf("failed to scan static directory: %w", err))
-		}
+		indexProducers.Wait()
 	}()
 
-	// build all the markdown
-	buildWg.Add(1)
 	go func() {
-		defer buildWg.Done()
-
-		if err := generator.scanMarkdown(ctx, logger, files, index); err != nil {
-			registerError(fmt.Errorf("failed to scan content directory: %w", err))
-		}
-	}()
-
-	// retrieve and sort the index pages
-	indexed := make([]Indexed, 0)
-
-	// scan indexes
-	buildWg.Add(1)
-	go func() {
-		defer buildWg.Done()
-
-		for elem := range index {
-			indexed = append(indexed, elem)
-		}
-	}()
-
-	// render indexes
-	go func() {
-		buildWg.Wait()
-		defer close(files)
-
-		indexed = append(indexed, indexedInputs...)
-
-		if err := generator.RenderIndexes(ctx, logger, indexed, files); err != nil {
-			registerError(fmt.Errorf("failed to generate index: %w", err))
-			return
-		}
+		defer close(outputs)
+		outputProducers.Wait()
 	}()
 
 	// write all the output files.
-	if err := generator.outputFiles(ctx, logger, files); err != nil {
+	if err := generator.outputFiles(ourContext, logger, outputs); err != nil {
 		registerError(fmt.Errorf("failed to write out files: %w", err))
 	}
 

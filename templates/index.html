@@ -7,7 +7,7 @@
 
         <script async src="https://inform.everyone.wtf/legal.min.js?float"></script>
 
-        {{ $title := .Common.BlogTitle }}{{ if .Meta.title }}{{ $title = print .Meta.title " | " $title }}{{ end }}
+        {{ $title := .Template.Globals.BlogTitle }}{{ if (.File.GetKey "title") }}{{ $title = print (.File.GetKey "title") " | " $title }}{{ end }}
         <title>{{ $title }}</title>
         <meta name="og:type" content="website">
         <meta itemprop="name" content="{{ $title }}">
@@ -21,22 +21,22 @@
     <body>
         <article itemscope="" itemtype="https://schema.org/Blog">
             <header>
-                {{ $heading := .Common.BlogTitle }}{{ if .Meta.title }}{{ $heading = .Meta.title }}{{ end }}
+                {{ $heading :=  .Template.Globals.BlogTitle }}{{ if (.File.GetKey "title") }}{{ $heading = (.File.GetKey "title") }}{{ end }}
                 <h1 itemprop="name headline">{{ $heading }}</h1>
 
-                {{ if .Meta.date }}
+                {{ if .File.GetKey "date"}}
                 <span>
-                    <time datetime="{{ .Meta.date }}" itemprop="datePublished">{{ date .Meta.date }}</time>
+                    <time datetime="{{ .File.GetKey "date" }}" itemprop="datePublished">{{ date (.File.GetKey "date") }}</time>
                 </span>
                 {{ end }}
                     
-                {{ if .Meta.author }}
+                {{ if (.File.GetKey "author") }}
                     <span itemprop="author" itemscope="" itemtype="https://schema.org/Person">
                         <span itemprop="name">
-                            {{ if .Meta.authorLink }}
-                                <a href="{{ .Meta.authorLink }}">{{ .Meta.author }}</a>
+                            {{ if .File.GetKey "authorLink" }}
+                                <a href="{{ .File.GetKey "authorLink" }}">{{ .File.GetKey "author" }}</a>
                             {{ else }}
-                                {{ .Meta.author }}
+                                {{ .File.GetKey "author" }}
                             {{ end }}
                         </span>
                     </span>
@@ -49,7 +49,7 @@
             
             <main>
                 <hr>
-                {{ .Content }}
+                {{ .File.Body }}
             </main>
         </article>
     </body>

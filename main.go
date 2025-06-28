@@ -3,40 +3,49 @@ package main
 import (
 	"cmp"
 	"context"
+	"fmt"
 	"generator/generator"
 	"html/template"
 	"log/slog"
 	"os"
 	"os/signal"
 	"strings"
+	"time"
 
 	_ "embed"
 )
 
-var commonData = map[string]any{
+var globals = map[string]any{
 	"BlogTitle": "High on Code!",
 }
 
 //go:embed "templates/index.html"
 var indexHTML string
-var htmlTemplate = generator.MustTemplate(indexHTML, "index.html", commonData)
+var indexTemplate = mustTemplate(indexHTML, "index.html")
 
 //go:embed templates/list.html
 var listHTML string
-var listTemplate = generator.MustPlainTemplate(listHTML, "list.html")
+var listTemplate = mustTemplate(listHTML, "list.html")
 
 var g = generator.Generator{
-	Contents: os.DirFS("content"),
-	Static:   os.DirFS("static"),
-
-	Indexes: map[string]*template.Template{
-		"index.html": listTemplate,
+	Inputs: []generator.Scanner{
+		generator.NewStaticScanner("static", []string{"_", "."}),
+		generator.NewMarkdownScanner("content", nil),
 	},
-	IndexCompareFunc: func(left, right generator.Indexed) int {
-		lMeta, _ := left.Meta.(map[string]any)
+
+	Indexes: []generator.IndexTemplate{
+		{
+			Path:     "index.html",
+			Template: listTemplate,
+			Globals:  globals,
+		},
+	},
+
+	IndexCompareFunc: func(left, right generator.IndexEntry) int {
+		lMeta, _ := left.Metadata.(map[string]any)
 		lDate, _ := lMeta["date"].(string)
 
-		rMeta, _ := right.Meta.(map[string]any)
+		rMeta, _ := right.Metadata.(map[string]any)
 		rDate, _ := rMeta["date"].(string)
 
 		return cmp.Or(
@@ -45,7 +54,14 @@ var g = generator.Generator{
 		)
 	},
 
-	ContentTemplate: htmlTemplate,
+	ContentTemplate: generator.ContentTemplate{
+		Template: indexTemplate,
+		Globals:  globals,
+	},
+
+	PostProcessors: []generator.PostProcessor{
+		generator.MinifyPostProcessor,
+	},
 
 	Output: generator.NewNativeFileWriter("public", true),
 }
@@ -68,5 +84,43 @@ func main() {
 	// and run
 	if err := g.Run(ctx, logger); err != nil {
 		exitCode = 1
+	}
+}
+
+func mustTemplate(src, name string) *template.Template {
+	return template.Must(template.New(name).Funcs(templateFuncs).Parse(src))
+}
+
+var templateFuncs = template.FuncMap{
+	"date": func(arg string) (string, error) {
+		date, err := time.Parse("2006-01-02", arg)
+		if err != nil {
+			return "", fmt.Errorf("failed to parse date %q: %w", arg, err)
+		}
+
+		day := date.Day()
+
+		return fmt.Sprintf(
+			"%s %d%s %d",
+			date.Format("January"),
+			day, getSuffix(day),
+			date.Year(),
+		), nil
+	},
+}
+
+func getSuffix(day int) string {
+	if day >= 11 && day <= 13 {
+		return "th"
+	}
+	switch day % 10 {
+	case 1:
+		return "st"
+	case 2:
+		return "nd"
+	case 3:
+		return "rd"
+	default:
+		return "th"
 	}
 }
