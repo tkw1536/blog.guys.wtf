@@ -1,4 +1,4 @@
-package main
+package generator
 
 import (
 	"bytes"
@@ -54,7 +54,7 @@ func getSuffix(day int) string {
 	}
 }
 
-func NewTemplate(src string, name string, common map[string]any) (*Template, error) {
+func NewTemplate(src string, name string, commonContext any) (*Template, error) {
 	template, err := template.New(name).Funcs(templateFuncs).Parse(src)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse template: %w", err)
@@ -70,29 +70,33 @@ func NewTemplate(src string, name string, common map[string]any) (*Template, err
 				meta.Meta,
 			),
 		),
-		common: common,
+		common: commonContext,
 	}, nil
 
 }
 
-func MustTemplate(src, name string, common map[string]any) *Template {
-	tpl, err := NewTemplate(src, name, common)
+func MustTemplate(src, name string, commonContext any) *Template {
+	tpl, err := NewTemplate(src, name, commonContext)
 	if err != nil {
 		panic(err)
 	}
 	return tpl
 }
 
+func MustPlainTemplate(src, name string) *template.Template {
+	return template.Must(template.New(name).Funcs(templateFuncs).Parse(src))
+}
+
 type Template struct {
 	tpl      *template.Template
 	markdown goldmark.Markdown
-	common   map[string]any
+	common   any
 }
 
 type TplContext struct {
 	Content template.HTML
 	Meta    map[string]any
-	Common  map[string]any
+	Common  any
 }
 
 var m *minify.M
