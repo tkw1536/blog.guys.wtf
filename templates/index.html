@@ -7,7 +7,8 @@
 
         {{ $title := .Template.Globals.BlogTitle }}{{ if (.File.Metadata.title) }}{{ $title = print (.File.Metadata.title) " | " $title }}{{ end }}
         {{ $description := "" }}{{ if .File.Metadata.description }}{{ $description = .File.Metadata.description }}{{ end }}
-        {{ $image := "" }}{{ if .File.Metadata.image }}{{ $image = .File.Metadata.image }}{{ end }}
+        {{ $image := "" }}{{ if .File.Metadata.image }}{{ $image = print .Template.Globals.URL .File.Metadata.image }}{{ end }}
+        {{ $url := print .Template.Globals.URL .File.Link }}
 
         <title>{{ $title }}</title>
 
@@ -15,11 +16,13 @@
         <meta property="og:title" content="{{ $title }}">
         {{ if $description }}<meta property="og:description" content="{{ $description }}">{{ end }}
         {{ if $image }}<meta name="og:image" content="{{ $image }}">{{ end }}
+        {{ if $url }}<meta name="og:url" content="{{ $url }}">{{ end }}
 
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="{{ $title }}">
         {{ if $description }}<meta name="twitter:description" content="{{ $description }}">{{ end }}
         {{ if $image }}<meta name="twitter:image" content="{{ $image }}">{{ end }}
+        {{ if $url }}<meta name="twitter:url" content="{{ $url }}">{{ end }}
 
         <link rel="stylesheet" href="/styles/latex.css">
         <link rel="stylesheet" href="/styles/global.css">

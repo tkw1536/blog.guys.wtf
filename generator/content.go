@@ -50,11 +50,10 @@ func (generator *Generator) renderContents(
 		return err
 	}
 
-	var out bytes.Buffer
 	for file := range input {
 		logger.Info("generating content file", slog.String("path", file.Path))
 
-		out.Reset()
+		var out bytes.Buffer
 		if err := generator.ContentTemplate.Execute(&out, file); err != nil {
 			return fmt.Errorf("failed to render content %q: %w", file.Path, err)
 		}

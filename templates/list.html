@@ -9,14 +9,14 @@
         {{ range .Entries }}
             {{ if and .Metadata .Metadata.title }}
                 <li>
-                    <a href="{{ .Link }}">{{ .Metadata.title }}</a>
+                    <a href="/{{ .Link }}">{{ .Metadata.title }}</a>
         
                     {{ if .Metadata.date }} <span><time time="{{ .Metadata.date }}">{{ date .Metadata.date }}</time></span> {{ end }}
                     {{ if .Metadata.author }} <span>{{ .Metadata.author }}</span> {{ end }}
                 </li>
             {{ else }}
                 <li>
-                    <a href="{{ .Link }}">{{ .Link }}</a>
+                    <a href="/{{ .Link }}">{{ .Link }}</a>
                 </li> 
             {{ end }}
         {{ end }}

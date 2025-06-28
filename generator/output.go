@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 )
@@ -40,6 +41,17 @@ type File struct {
 
 	// Contents are the contents of this file.
 	Contents []byte
+}
+
+// Link returns a link to this post.
+// Never starts with a /.
+func (file File) Link() string {
+	if file.Path == "index.html" {
+		return ""
+	}
+
+	noIndex := strings.TrimSuffix(file.Path, "/index.html")
+	return strings.TrimSuffix(noIndex, "/") + "/"
 }
 
 // FileWriter is a function that writes a file to output.

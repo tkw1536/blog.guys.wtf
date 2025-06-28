@@ -48,8 +48,7 @@ type IndexEntry struct {
 
 // Link returns a nice link to this page.
 func (index IndexEntry) Link() string {
-	noIndex := strings.TrimSuffix(index.Path, "/index.html")
-	return strings.TrimSuffix(noIndex, "/") + "/"
+	return File{Path: index.Path}.Link()
 }
 
 // An IndexComparisonFunc is passed to [slices.SortFunc] to compare to indexes.
@@ -77,14 +76,13 @@ func (generator *Generator) renderIndexes(
 		return err
 	}
 
-	var out bytes.Buffer
 	for _, tpl := range generator.Indexes {
 		logger.Info("sorting index", slog.Int("entryCount", len(entries)))
 		slices.SortFunc(entries, tpl.CompareFunc.f())
 
 		logger.Info("generating index content", slog.String("path", tpl.Path), slog.Int("entryCount", len(entries)))
 
-		out.Reset()
+		var out bytes.Buffer
 		if err := tpl.Execute(&out, entries); err != nil {
 			return fmt.Errorf("failed to render index contents %q: %w", tpl.Path, err)
 		}

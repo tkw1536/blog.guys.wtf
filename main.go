@@ -18,6 +18,7 @@ import (
 )
 
 var globals = map[string]any{
+	"URL":       "https://blog.guys.wtf/",
 	"BlogTitle": "High on Code!",
 }
 
