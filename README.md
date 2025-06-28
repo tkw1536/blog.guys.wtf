@@ -1,3 +1,3 @@
 ## blog.guys.wtf
 
-Build using "go build ."
+Build using "go run ."
