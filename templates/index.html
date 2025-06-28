@@ -6,13 +6,20 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         {{ $title := .Template.Globals.BlogTitle }}{{ if (.File.Metadata.title) }}{{ $title = print (.File.Metadata.title) " | " $title }}{{ end }}
+        {{ $description := "" }}{{ if .File.Metadata.description }}{{ $description = .File.Metadata.description }}{{ end }}
+        {{ $image := "" }}{{ if .File.Metadata.image }}{{ $image = .File.Metadata.image }}{{ end }}
 
         <title>{{ $title }}</title>
 
-        <meta name="og:type" content="website">
-        <meta itemprop="name" content="{{ $title }}">
-        <meta name="og:title" content="{{ $title }}">
-        <meta property="twitter:title" content="{{ $title }}">
+        <meta property="og:type" content="website">
+        <meta property="og:title" content="{{ $title }}">
+        {{ if $description }}<meta property="og:description" content="{{ $description }}">{{ end }}
+        {{ if $image }}<meta name="og:image" content="{{ $image }}">{{ end }}
+
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="{{ $title }}">
+        {{ if $description }}<meta name="twitter:description" content="{{ $description }}">{{ end }}
+        {{ if $image }}<meta name="twitter:image" content="{{ $image }}">{{ end }}
 
         <link rel="stylesheet" href="/styles/latex.css">
         <link rel="stylesheet" href="/styles/global.css">

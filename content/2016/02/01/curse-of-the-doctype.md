@@ -1,8 +1,9 @@
 ---
-title:      Curse of the !DOCTYPE
-date:       2016-02-01
-author:     thunderboltsid
-authorLink: https://github.com/thunderboltsid
+title:          Curse of the !DOCTYPE
+date:           2016-02-01
+author:         thunderboltsid
+authorLink:     https://github.com/thunderboltsid
+description:    About the !DOCTYPE
 ---
 
 DOCTYPE: The enigmatic syntactical declaration that’s forced down the throat of amateur web developers and designers without much understanding of what it implies. Sure, some person might’ve mentioned that it means document type, which is true, in a way, it does not quite reflect it’s true idea.
