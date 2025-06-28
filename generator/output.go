@@ -44,14 +44,19 @@ type File struct {
 }
 
 // Link returns a link to this post.
-// Never starts with a /.
+// Always starts with a '/'.
 func (file File) Link() string {
 	if file.Path == "index.html" {
-		return ""
+		return "/"
 	}
 
-	noIndex := strings.TrimSuffix(file.Path, "/index.html")
-	return strings.TrimSuffix(noIndex, "/") + "/"
+	cleanPath := strings.Trim(file.Path, "/")
+
+	if strings.HasSuffix(cleanPath, "/index.html") {
+		cleanPath = cleanPath[:len(cleanPath)-len("index.html")]
+	}
+
+	return "/" + cleanPath
 }
 
 // FileWriter is a function that writes a file to output.
