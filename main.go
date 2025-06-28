@@ -13,6 +13,8 @@ import (
 	"time"
 
 	_ "embed"
+
+	"github.com/yuin/goldmark"
 )
 
 var globals = map[string]any{
@@ -30,28 +32,28 @@ var listTemplate = mustTemplate(listHTML, "list.html")
 var g = generator.Generator{
 	Inputs: []generator.Scanner{
 		generator.NewStaticScanner("static", []string{"_", "."}),
-		generator.NewMarkdownScanner("content", nil),
+		generator.NewMarkdownScanner("content", nil, goldmark.WithRendererOptions(
+		//html.WithUnsafe(),
+		)),
 	},
 
 	Indexes: []generator.IndexTemplate{
 		{
 			Path:     "index.html",
 			Template: listTemplate,
-			Globals:  globals,
+			CompareFunc: func(left, right generator.IndexEntry) int {
+				lMeta, _ := left.Metadata.(map[string]any)
+				lDate, _ := lMeta["date"].(string)
+
+				rMeta, _ := right.Metadata.(map[string]any)
+				rDate, _ := rMeta["date"].(string)
+
+				return cmp.Or(
+					strings.Compare(rDate, lDate), // descending by date
+					strings.Compare(left.Path, right.Path),
+				)
+			},
 		},
-	},
-
-	IndexCompareFunc: func(left, right generator.IndexEntry) int {
-		lMeta, _ := left.Metadata.(map[string]any)
-		lDate, _ := lMeta["date"].(string)
-
-		rMeta, _ := right.Metadata.(map[string]any)
-		rDate, _ := rMeta["date"].(string)
-
-		return cmp.Or(
-			strings.Compare(rDate, lDate),
-			strings.Compare(left.Path, right.Path),
-		)
 	},
 
 	ContentTemplate: generator.ContentTemplate{

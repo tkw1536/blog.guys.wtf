@@ -16,6 +16,8 @@ type IndexTemplate struct {
 	Path string // Path of the file to create.
 	Raw  bool   // Should the path assumed to be raw?
 
+	CompareFunc IndexComparisonFunc
+
 	Template *template.Template // Template to use for rendering.
 	Globals  any                // Global Metadata
 	Metadata any                // Metadata to return from the template.
@@ -75,10 +77,11 @@ func (generator *Generator) renderIndexes(
 		return err
 	}
 
-	slices.SortFunc(entries, generator.IndexCompareFunc.f())
-
 	var out bytes.Buffer
 	for _, tpl := range generator.Indexes {
+		logger.Info("sorting index", slog.Int("entryCount", len(entries)))
+		slices.SortFunc(entries, tpl.CompareFunc.f())
+
 		logger.Info("generating index content", slog.String("path", tpl.Path), slog.Int("entryCount", len(entries)))
 
 		out.Reset()

@@ -11,7 +11,6 @@ import (
 	"github.com/yuin/goldmark"
 	meta "github.com/yuin/goldmark-meta"
 	"github.com/yuin/goldmark/parser"
-	gmHtml "github.com/yuin/goldmark/renderer/html"
 	"golang.org/x/net/html"
 )
 
@@ -19,14 +18,13 @@ import (
 // files are added to the index if the index function returns true, or shouldIndex is nil.
 //
 // Internally uses [os.Root], and ensures that no files outside the given directory are caught.
-func NewMarkdownScanner(path string, shouldIndex func(path string, Metadata any) bool) Scanner {
+func NewMarkdownScanner(path string, shouldIndex func(path string, Metadata any) bool, options ...goldmark.Option) Scanner {
 	markdown := goldmark.New(
-		goldmark.WithRendererOptions(
-			gmHtml.WithUnsafe(),
-		),
-		goldmark.WithExtensions(
-			meta.Meta,
-		),
+		append([]goldmark.Option{
+			goldmark.WithExtensions(
+				meta.Meta,
+			),
+		}, options...)...,
 	)
 
 	return newFSScanner(
@@ -48,7 +46,7 @@ func NewMarkdownScanner(path string, shouldIndex func(path string, Metadata any)
 
 			// addRel to external links
 			var contentBuffer bytes.Buffer
-			if err := addRelToLinks(&contentBuffer, &markdownResult); err != nil {
+			if err := addTargetAndRel(&contentBuffer, &markdownResult); err != nil {
 				return ScannedFile{}, fmt.Errorf("failed to make links open in new tab: %w", err)
 			}
 
@@ -85,9 +83,10 @@ func NewMarkdownScanner(path string, shouldIndex func(path string, Metadata any)
 	)
 }
 
-// addRelToLinks adds rel="noopener noreferrer" to all links in the given HTML string.
-func addRelToLinks(dst io.Writer, src io.Reader) error {
-	updateToken := func(token *html.Token) {
+// addTargetAndRel adds target="_blank" rel="noopener noreferrer" to all links in the given HTML
+func addTargetAndRel(dst io.Writer, src io.Reader) error {
+	// updateLink updates a token representing an '<a' starting element.
+	updateLink := func(token *html.Token) {
 		var (
 			hrefId   = -1
 			relId    = -1
@@ -140,7 +139,7 @@ func addRelToLinks(dst io.Writer, src io.Reader) error {
 		case html.StartTagToken:
 			token := tokenizer.Token()
 			if strings.ToLower(token.Data) == "a" {
-				updateToken(&token)
+				updateLink(&token)
 
 				_, err := dst.Write([]byte(token.String()))
 				if err != nil {

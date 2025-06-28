@@ -14,8 +14,7 @@ type Generator struct {
 	Inputs []Scanner
 
 	// Indexes are special templates which are passed all previously generated files.
-	Indexes          []IndexTemplate
-	IndexCompareFunc IndexComparisonFunc
+	Indexes []IndexTemplate
 
 	// ContentTemplate is the template applied to all non-raw files.
 	ContentTemplate ContentTemplate
@@ -84,7 +83,7 @@ func (generator *Generator) Run(ctx context.Context, logger *slog.Logger) error 
 		}()
 	}
 
-	// build indexes if needed
+	// collect inputs and send them to the appropriate next stages
 	postProducers.Add(1)
 	contentProducers.Add(1)
 	indexProducers.Add(1)
@@ -111,6 +110,7 @@ func (generator *Generator) Run(ctx context.Context, logger *slog.Logger) error 
 		}
 	}()
 
+	// send indexes to the next appropriate stages
 	contentProducers.Add(1)
 	postProducers.Add(1)
 	go func() {
