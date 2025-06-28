@@ -1,7 +1,7 @@
 ---
 title:          Curse of the !DOCTYPE
 date:           2016-02-01
-author:         thunderboltsid
+author:         Sid Shukla 
 authorLink:     https://github.com/thunderboltsid
 description:    About the !DOCTYPE
 ---
