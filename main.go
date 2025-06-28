@@ -42,12 +42,8 @@ var g = generator.Generator{
 			Path:     "index.html",
 			Template: listTemplate,
 			CompareFunc: func(left, right generator.IndexEntry) int {
-				lMeta, _ := left.Metadata.(map[string]any)
-				lDate, _ := lMeta["date"].(string)
-
-				rMeta, _ := right.Metadata.(map[string]any)
-				rDate, _ := rMeta["date"].(string)
-
+				lDate, _ := left.Metadata["date"].(string)
+				rDate, _ := right.Metadata["date"].(string)
 				return cmp.Or(
 					strings.Compare(rDate, lDate), // descending by date
 					strings.Compare(left.Path, right.Path),

@@ -1,22 +1,24 @@
+
 <p>
     My <a href="https://tkw01536.de/">personal</a> blog about random topics I am interested in related to programming.
     Also contains a historic post by a friend. 
 </p>
-<hr>
 
-<ul class="posts">
-    {{ range .Entries }}
-        {{ if and .Metadata .Metadata.title }}
-            <li>
-                <a href="{{ .Link }}">{{ .Metadata.title }}</a>
-    
-                {{ if .Metadata.date }} <span>{{ date .Metadata.date}}</span> {{ end }}
-                {{ if .Metadata.author }} <span>{{ .Metadata.author }}</span> {{ end }}
-            </li>
-        {{ else }}
-            <li>
-                <a href="{{ .Link }}">{{ .Link }}</a>
-            </li> 
+<p>
+    <ul class="posts">
+        {{ range .Entries }}
+            {{ if and .Metadata .Metadata.title }}
+                <li>
+                    <a href="{{ .Link }}">{{ .Metadata.title }}</a>
+        
+                    {{ if .Metadata.date }} <span><time time="{{ .Metadata.date }}">{{ date .Metadata.date }}</time></span> {{ end }}
+                    {{ if .Metadata.author }} <span>{{ .Metadata.author }}</span> {{ end }}
+                </li>
+            {{ else }}
+                <li>
+                    <a href="{{ .Link }}">{{ .Link }}</a>
+                </li> 
+            {{ end }}
         {{ end }}
-    {{ end }}
-</ul>
+    </ul>
+</p>

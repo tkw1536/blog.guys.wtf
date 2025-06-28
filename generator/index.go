@@ -19,8 +19,8 @@ type IndexTemplate struct {
 	CompareFunc IndexComparisonFunc
 
 	Template *template.Template // Template to use for rendering.
-	Globals  any                // Global Metadata
-	Metadata any                // Metadata to return from the template.
+	Globals  map[string]any     // Global Metadata
+	Metadata map[string]any     // Metadata to return from the template.
 }
 
 // Execute executes this index template.
@@ -42,8 +42,8 @@ type IndexTemplateContext struct {
 
 // IndexEntry is an indexed blog page.
 type IndexEntry struct {
-	Path     string // Path the file will be outputted in
-	Metadata any    // Metadata contained in the file, if any
+	Path     string         // Path the file will be outputted in
+	Metadata map[string]any // Metadata contained in the file, if any
 }
 
 // Link returns a nice link to this page.

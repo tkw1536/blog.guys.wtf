@@ -5,10 +5,10 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <script async src="https://inform.everyone.wtf/legal.min.js?float"></script>
+        {{ $title := .Template.Globals.BlogTitle }}{{ if (.File.Metadata.title) }}{{ $title = print (.File.Metadata.title) " | " $title }}{{ end }}
 
-        {{ $title := .Template.Globals.BlogTitle }}{{ if (.File.GetKey "title") }}{{ $title = print (.File.GetKey "title") " | " $title }}{{ end }}
         <title>{{ $title }}</title>
+
         <meta name="og:type" content="website">
         <meta itemprop="name" content="{{ $title }}">
         <meta name="og:title" content="{{ $title }}">
@@ -18,40 +18,47 @@
         <link rel="stylesheet" href="/styles/global.css">
     </head>
 
-    <body>
-        <article itemscope="" itemtype="https://schema.org/Blog">
-            <header>
-                {{ $heading :=  .Template.Globals.BlogTitle }}{{ if (.File.GetKey "title") }}{{ $heading = (.File.GetKey "title") }}{{ end }}
+    <body class="latex-dark-auto">
+        <nav>
+            {{ if eq "index.html" .File.Path  }}
+                <b>Home</b>
+            {{ else }}
+                <a itemprop="url" href="/" target="_self">Home</a>
+            {{ end }}
+        </nav>
+
+            <header itemscope="" itemtype="https://schema.org/Blog">
+                {{ $heading :=  .Template.Globals.BlogTitle }}{{ if (.File.Metadata.title) }}{{ $heading = (.File.Metadata.title) }}{{ end }}
                 <h1 itemprop="name headline">{{ $heading }}</h1>
 
-                {{ if .File.GetKey "date"}}
-                <span>
-                    <time datetime="{{ .File.GetKey "date" }}" itemprop="datePublished">{{ date (.File.GetKey "date") }}</time>
-                </span>
+                {{ if .File.Metadata.date}}
+                    <span>
+                        <time datetime="{{ .File.Metadata.date }}" itemprop="datePublished">{{ date (.File.Metadata.date) }}</time>
+                    </span>
                 {{ end }}
                     
-                {{ if (.File.GetKey "author") }}
+                {{ if .File.Metadata.author }}
                     <span itemprop="author" itemscope="" itemtype="https://schema.org/Person">
                         <span itemprop="name">
-                            {{ if .File.GetKey "authorLink" }}
-                                <a href="{{ .File.GetKey "authorLink" }}">{{ .File.GetKey "author" }}</a>
+                            {{ if .File.Metadata.authorLink }}
+                                <a href="{{ .File.Metadata.authorLink }}">{{ .File.Metadata.author }}</a>
                             {{ else }}
-                                {{ .File.GetKey "author" }}
+                                {{ .File.Metadata.author }}
                             {{ end }}
                         </span>
                     </span>
                 {{ end }}
-
-                <span aria-label="Navigation" itemscope="" itemtype="https://schema.org/SiteNavigationElement">
-                    <a itemprop="url" href="/" target="_self">Home</a>
-                </span>
             </header>
             
             <main>
-                <hr>
-                {{ .File.Body }}
+                <article>
+                    {{ .File.Body }}
+                </article>
             </main>
-        </article>
+
+        <footer>
+            <script src="https://inform.everyone.wtf/legal.min.js"></script>
+        </footer>
     </body>
 
 </html>

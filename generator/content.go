@@ -12,19 +12,11 @@ import (
 // ContentFile is a file to be rendered as a content template.
 type ContentFile struct {
 	File
-	Metadata any // Metadata contained in the file, if any.
+	Metadata map[string]any // Metadata contained in the file, if any.
 }
 
 func (cf *ContentFile) Body() template.HTML {
 	return template.HTML(cf.File.Contents)
-}
-
-func (cf *ContentFile) GetKey(key string) any {
-	mp, ok := cf.Metadata.(map[string]any)
-	if !ok {
-		return nil
-	}
-	return mp[key]
 }
 
 // IndexTemplate is a template to be used for generation.
