@@ -18,7 +18,7 @@ import (
 // files are added to the index if the index function returns true, or shouldIndex is nil.
 //
 // Internally uses [os.Root], and ensures that no files outside the given directory are caught.
-func NewMarkdownScanner(path string, shouldIndex func(path string, Metadata any) bool, options ...goldmark.Option) Scanner {
+func NewMarkdownScanner(path string, shouldIndex func(path string, Metadata map[string]any) bool, options ...goldmark.Option) Scanner {
 	markdown := goldmark.New(
 		append([]goldmark.Option{
 			goldmark.WithExtensions(

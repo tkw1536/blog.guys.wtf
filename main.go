@@ -15,6 +15,7 @@ import (
 	_ "embed"
 
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
 )
 
 var globals = map[string]any{
@@ -33,9 +34,13 @@ var listTemplate = mustTemplate(listHTML, "list.html")
 var g = generator.Generator{
 	Inputs: []generator.Scanner{
 		generator.NewStaticScanner("static", []string{"_", "."}),
-		generator.NewMarkdownScanner("content", nil, goldmark.WithRendererOptions(
-		//html.WithUnsafe(),
-		)),
+		generator.NewMarkdownScanner("content", func(path string, Metadata map[string]any) bool {
+			return Metadata["draft"] != true
+		},
+			goldmark.WithExtensions(extension.GFM),
+			goldmark.WithRendererOptions(
+			//	html.WithUnsafe(),
+			)),
 	},
 
 	Indexes: []generator.IndexTemplate{

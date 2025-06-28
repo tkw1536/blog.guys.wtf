@@ -5,9 +5,16 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        {{ $title := .Template.Globals.BlogTitle }}{{ if (.File.Metadata.title) }}{{ $title = print (.File.Metadata.title) " | " $title }}{{ end }}
-        {{ $description := "" }}{{ if .File.Metadata.description }}{{ $description = .File.Metadata.description }}{{ end }}
-        {{ $image := "" }}{{ if .File.Metadata.image }}{{ $image = print .Template.Globals.URL .File.Metadata.image }}{{ end }}
+        {{ $title := .Template.Globals.BlogTitle }}
+            {{ if (.File.Metadata.title) }}{{ $title = print (.File.Metadata.title) " | " $title }}{{ end }}
+            {{ if .File.Metadata.draft }}{{ $title = print $title " - DRAFT" }}{{ end }}
+        {{ $heading :=  .Template.Globals.BlogTitle }}
+            {{ if (.File.Metadata.title) }}{{ $heading = .File.Metadata.title }}{{ end }}
+            {{ if .File.Metadata.draft }}{{ $heading = print $heading " - DRAFT" }}{{ end }}
+        {{ $description := "" }}
+            {{ if .File.Metadata.description }}{{ $description = .File.Metadata.description }}{{ end }}
+        {{ $image := "" }}
+            {{ if .File.Metadata.image }}{{ $image = print .Template.Globals.URL .File.Metadata.image }}{{ end }}
         {{ $url := print .Template.Globals.URL .File.Link }}
 
         <title>{{ $title }}</title>
@@ -32,7 +39,9 @@
             {{ end }}
         {{ end }}
         {{ if .File.Metadata.date }}
-            <meta property="article:published_time" content="{{ .File.Metadata.date }}">
+            {{ if .File.Metadata.draft }}{{ else }}
+                <meta property="article:published_time" content="{{ .File.Metadata.date }}">
+            {{ end }}
         {{ end }}
 
         <link rel="stylesheet" href="/styles/latex.css">
@@ -49,7 +58,7 @@
         </nav>
 
             <header itemscope="" itemtype="https://schema.org/Blog">
-                {{ $heading :=  .Template.Globals.BlogTitle }}{{ if (.File.Metadata.title) }}{{ $heading = (.File.Metadata.title) }}{{ end }}
+                
                 <h1 itemprop="name headline">{{ $heading }}</h1>
 
                 {{ if .File.Metadata.date}}
