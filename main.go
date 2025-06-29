@@ -14,7 +14,9 @@ import (
 
 	_ "embed"
 
+	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/yuin/goldmark"
+	highlighting "github.com/yuin/goldmark-highlighting/v2"
 	"github.com/yuin/goldmark/extension"
 )
 
@@ -34,10 +36,20 @@ var listTemplate = mustTemplate(listHTML, "list.html")
 var g = generator.Generator{
 	Inputs: []generator.Scanner{
 		generator.NewStaticScanner("static", []string{"_", "."}),
-		generator.NewMarkdownScanner("content", func(path string, Metadata map[string]any) bool {
-			return Metadata["draft"] != true
-		},
-			goldmark.WithExtensions(extension.GFM),
+		generator.NewMarkdownScanner(
+			"content",
+			func(path string, Metadata map[string]any) bool {
+				return Metadata["draft"] != true
+			},
+			goldmark.WithExtensions(
+				extension.GFM,
+				highlighting.NewHighlighting(
+					highlighting.WithStyle("monokai"),
+					highlighting.WithFormatOptions(
+						chromahtml.WithLineNumbers(true),
+					),
+				),
+			),
 			goldmark.WithRendererOptions(
 			//	html.WithUnsafe(),
 			)),
