@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html/template"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -22,6 +23,7 @@ func (generate *Generator) outputFiles(ctx context.Context, logger *slog.Logger,
 				return nil
 			}
 
+			// TODO: run this concurrently
 			if err := generate.Output(ctx, logger, file); err != nil {
 				return fmt.Errorf("failed to output file: %w", err)
 			}
@@ -43,8 +45,14 @@ type File struct {
 	Contents []byte
 }
 
-// Link returns a link to this post.
-// Always starts with a '/'.
+// Body returns the contents of this file as unsafe html.
+// Intended to be used in templates.
+func (cf *File) Body() template.HTML {
+	return template.HTML(cf.Contents)
+}
+
+// Link returns a nice link to this file.
+// Links always start with "/", and only end in slash in case of a directory.
 func (file File) Link() string {
 	if file.Path == "index.html" {
 		return "/"

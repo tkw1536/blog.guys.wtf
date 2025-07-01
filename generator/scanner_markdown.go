@@ -69,7 +69,7 @@ func NewMarkdownScanner(path string, shouldIndex func(path string, Metadata map[
 
 			// and then use
 			return ScannedFile{
-				ContentFile: ContentFile{
+				FileWithMetadata: FileWithMetadata{
 					File: File{
 						Path:     filename,
 						Contents: contentBuffer.Bytes(),

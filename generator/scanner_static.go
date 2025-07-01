@@ -24,7 +24,7 @@ func NewStaticScanner(path string, prefixes []string) Scanner {
 
 			// then copy it as-is
 			return ScannedFile{
-				ContentFile: ContentFile{
+				FileWithMetadata: FileWithMetadata{
 					File: File{
 						Path:     path,
 						Contents: contents,

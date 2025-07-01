@@ -9,14 +9,10 @@ import (
 	"log/slog"
 )
 
-// ContentFile is a file to be rendered as a content template.
-type ContentFile struct {
+// FileWithMetadata is a file with associated metadata.
+type FileWithMetadata struct {
 	File
 	Metadata map[string]any // Metadata contained in the file, if any.
-}
-
-func (cf *ContentFile) Body() template.HTML {
-	return template.HTML(cf.File.Contents)
 }
 
 // IndexTemplate is a template to be used for generation.
@@ -25,7 +21,7 @@ type ContentTemplate struct {
 	Globals  any                // Global Data to be passed.
 }
 
-func (ctc *ContentTemplate) Execute(w io.Writer, file ContentFile) error {
+func (ctc *ContentTemplate) Execute(w io.Writer, file FileWithMetadata) error {
 	return ctc.Template.Execute(w, &ContentTemplateContext{
 		File:     file,
 		Template: ctc,
@@ -34,35 +30,21 @@ func (ctc *ContentTemplate) Execute(w io.Writer, file ContentFile) error {
 
 // ContentTemplateContext is passed to a [ContentTemplate].
 type ContentTemplateContext struct {
-	File     ContentFile // File to be rendered.
+	File     FileWithMetadata // File to be rendered.
 	Template *ContentTemplate
 }
 
-// Render the content pages.
-func (generator *Generator) renderContents(
-	ctx context.Context,
-	logger *slog.Logger,
+// renders a single content page
+func (generator *Generator) renderContent(ctx context.Context, logger *slog.Logger, file FileWithMetadata) (File, error) {
+	logger.Info("generating content file", slog.String("path", file.Path))
 
-	output chan<- File,
-	input <-chan ContentFile,
-) error {
-	if err := ctx.Err(); err != nil {
-		return err
+	var out bytes.Buffer
+	if err := generator.ContentTemplate.Execute(&out, file); err != nil {
+		return File{}, fmt.Errorf("failed to render content %q: %w", file.Path, err)
 	}
 
-	for file := range input {
-		logger.Info("generating content file", slog.String("path", file.Path))
-
-		var out bytes.Buffer
-		if err := generator.ContentTemplate.Execute(&out, file); err != nil {
-			return fmt.Errorf("failed to render content %q: %w", file.Path, err)
-		}
-
-		output <- File{
-			Path:     file.Path,
-			Contents: out.Bytes(),
-		}
-
-	}
-	return nil
+	return File{
+		Path:     file.Path,
+		Contents: out.Bytes(),
+	}, nil
 }

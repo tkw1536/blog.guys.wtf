@@ -88,7 +88,7 @@ func (generator *Generator) renderIndexes(
 		}
 
 		output <- ScannedFile{
-			ContentFile: ContentFile{
+			FileWithMetadata: FileWithMetadata{
 				File: File{
 					Path:     tpl.Path,
 					Contents: out.Bytes(),

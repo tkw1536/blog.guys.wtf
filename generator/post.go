@@ -24,24 +24,18 @@ type PostProcessor func(in File) (out File, err error)
 func (generator *Generator) postProcess(
 	ctx context.Context,
 	logger *slog.Logger,
-
-	output chan<- File,
-	input <-chan File,
-) error {
-	// no op for now!
-	for file := range input {
-		logger.Info("post processing file", slog.String("path", file.Path))
-		for _, processor := range generator.PostProcessors {
-			var err error
-			file, err = processor(file)
-			if err != nil {
-				return fmt.Errorf("failed to post process: %w", err)
-			}
+	file File,
+) (File, error) {
+	logger.Info("post processing file", slog.String("path", file.Path))
+	for _, processor := range generator.PostProcessors {
+		var err error
+		file, err = processor(file)
+		if err != nil {
+			return File{}, fmt.Errorf("failed to post process: %w", err)
 		}
-
-		output <- file
 	}
-	return nil
+
+	return file, nil
 }
 
 var m *minify.M

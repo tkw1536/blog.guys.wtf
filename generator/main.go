@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"runtime"
 	"sync"
 )
 
@@ -54,21 +55,23 @@ func (generator *Generator) Run(ctx context.Context, logger *slog.Logger) error 
 		}
 	}
 
+	var bufferSize = runtime.NumCPU()
+
 	var (
-		inputs         = make(chan ScannedFile) // inputs from the inputs
-		inputProducers sync.WaitGroup           // waits for anything writing to inputs
+		inputs         = make(chan ScannedFile, bufferSize) // inputs from the inputs
+		inputProducers sync.WaitGroup                       // waits for anything writing to inputs
 
-		contents         = make(chan ContentFile) // non-raw files to be wrapped in ContentTemplate
-		contentProducers sync.WaitGroup           // waits for anything writing to the contents
+		contents         = make(chan FileWithMetadata, bufferSize) // non-raw files to be wrapped in ContentTemplate
+		contentProducers sync.WaitGroup                            // waits for anything writing to the contents
 
-		index          = make(chan ScannedFile)
+		index          = make(chan ScannedFile, bufferSize)
 		indexProducers sync.WaitGroup // anything producing an index entry
 
-		posts         = make(chan File) // outputs to be post-processed
-		postProducers sync.WaitGroup    // waits for anything producing post-processing output
+		posts         = make(chan File, bufferSize) // outputs to be post-processed
+		postProducers sync.WaitGroup                // waits for anything producing post-processing output
 
-		outputs         = make(chan File) // final outputs
-		outputProducers sync.WaitGroup    // anything producing final output
+		outputs         = make(chan File, bufferSize) // final outputs
+		outputProducers sync.WaitGroup                // anything producing final output
 	)
 
 	// start all the inputs
@@ -97,7 +100,7 @@ func (generator *Generator) Run(ctx context.Context, logger *slog.Logger) error 
 			if result.Raw {
 				posts <- result.File
 			} else {
-				contents <- result.ContentFile
+				contents <- result.FileWithMetadata
 			}
 
 			if result.Indexed {
@@ -125,30 +128,16 @@ func (generator *Generator) Run(ctx context.Context, logger *slog.Logger) error 
 			if result.Raw {
 				posts <- result.File
 			} else {
-				contents <- result.ContentFile
+				contents <- result.FileWithMetadata
 			}
 		}
 	}()
 
 	// run the content template where needed
-	postProducers.Add(1)
-	go func() {
-		defer postProducers.Done()
-
-		if err := generator.renderContents(ourContext, logger, posts, contents); err != nil {
-			registerError(fmt.Errorf("failed to render contents: %w", err))
-		}
-	}()
+	pipe(ctx, logger, posts, contents, &postProducers, registerError, generator.renderContent)
 
 	// produce final outputs
-	outputProducers.Add(1)
-	go func() {
-		defer outputProducers.Done()
-
-		if err := generator.postProcess(ourContext, logger, outputs, posts); err != nil {
-			registerError(fmt.Errorf("failed to post process: %w", err))
-		}
-	}()
+	pipe(ctx, logger, outputs, posts, &outputProducers, registerError, generator.postProcess)
 
 	go func() {
 		defer close(inputs)
@@ -188,4 +177,47 @@ func (generator *Generator) Run(ctx context.Context, logger *slog.Logger) error 
 	default:
 		return nil
 	}
+}
+
+// pipe pipes content from the in channel to the out channel using f.
+// when an error occurs aborts and calls registerError instead.
+// wg is used to keep track of running operations.
+func pipe[S, T any](ctx context.Context, logger *slog.Logger, out chan<- T, in <-chan S, wg *sync.WaitGroup, registerError func(error), f func(context.Context, *slog.Logger, S) (T, error)) {
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+
+		for {
+			for {
+				select {
+				case input, ok := <-in:
+					if !ok {
+						return
+					}
+
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+
+						output, err := f(ctx, logger, input)
+						if err != nil {
+							registerError(fmt.Errorf("pipe processing failed: %w", err))
+						}
+
+						select {
+						case out <- output:
+						case <-ctx.Done():
+							registerError(fmt.Errorf("pipe output failed: %w", ctx.Err()))
+							return
+						}
+					}()
+
+				case <-ctx.Done():
+					registerError(fmt.Errorf("pipe input failed: %w", ctx.Err()))
+					return
+				}
+			}
+		}
+	}()
 }
