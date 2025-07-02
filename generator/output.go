@@ -14,25 +14,6 @@ import (
 	"sync/atomic"
 )
 
-// outputFiles writes files to the given output.
-func (generate *Generator) outputFiles(ctx context.Context, logger *slog.Logger, files <-chan File) error {
-	for {
-		select {
-		case file, ok := <-files:
-			if !ok { // no more files
-				return nil
-			}
-
-			// TODO: run this concurrently
-			if err := generate.Output(ctx, logger, file); err != nil {
-				return fmt.Errorf("failed to output file: %w", err)
-			}
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
-}
-
 // File describes a single file to be created.
 type File struct {
 	// Path is the relative path from the root of the output directory to this file.

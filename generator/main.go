@@ -72,6 +72,8 @@ func (generator *Generator) Run(ctx context.Context, logger *slog.Logger) error 
 
 		outputs         = make(chan File, bufferSize) // final outputs
 		outputProducers sync.WaitGroup                // anything producing final output
+
+		fileWriters sync.WaitGroup
 	)
 
 	// start all the inputs
@@ -133,12 +135,39 @@ func (generator *Generator) Run(ctx context.Context, logger *slog.Logger) error 
 		}
 	}()
 
-	// run the content template where needed
-	pipe(ctx, logger, posts, contents, &postProducers, registerError, generator.renderContent)
+	// run the content template
+	pipe(ourContext, logger, posts, contents, &postProducers, registerError, generator.renderContent)
 
 	// produce final outputs
-	pipe(ctx, logger, outputs, posts, &outputProducers, registerError, generator.postProcess)
+	pipe(ourContext, logger, outputs, posts, &outputProducers, registerError, generator.postProcess)
 
+	// write out files
+	fileWriters.Add(1)
+	go func() {
+		defer fileWriters.Done()
+
+		for {
+			select {
+			case file, ok := <-outputs:
+				if !ok {
+					return
+				}
+
+				fileWriters.Add(1)
+				go func() {
+					defer fileWriters.Done()
+
+					if err := generator.Output(ctx, logger, file); err != nil {
+						registerError(fmt.Errorf("failed to output file: %w", err))
+					}
+				}()
+			case <-ourContext.Done():
+				registerError(fmt.Errorf("failed to output file: %w", ourContext.Err()))
+			}
+		}
+	}()
+
+	// close all the components once done
 	go func() {
 		defer close(inputs)
 		inputProducers.Wait()
@@ -165,11 +194,10 @@ func (generator *Generator) Run(ctx context.Context, logger *slog.Logger) error 
 		outputProducers.Wait()
 	}()
 
-	// write all the output files.
-	if err := generator.outputFiles(ourContext, logger, outputs); err != nil {
-		registerError(fmt.Errorf("failed to write out files: %w", err))
-	}
+	// wait for all the files to have been output
+	fileWriters.Wait()
 
+	// and show an error, if any
 	select {
 	case err := <-errChan:
 		logger.Error("build process failed", slog.Any("error", err))
