@@ -135,37 +135,10 @@ func (generator *Generator) Run(ctx context.Context, logger *slog.Logger) error 
 		}
 	}()
 
-	// run the content template
+	// renderContent -> postProcess -> output
 	pipe(ourContext, logger, posts, contents, &postProducers, registerError, generator.renderContent)
-
-	// produce final outputs
 	pipe(ourContext, logger, outputs, posts, &outputProducers, registerError, generator.postProcess)
-
-	// write out files
-	fileWriters.Add(1)
-	go func() {
-		defer fileWriters.Done()
-
-		for {
-			select {
-			case file, ok := <-outputs:
-				if !ok {
-					return
-				}
-
-				fileWriters.Add(1)
-				go func() {
-					defer fileWriters.Done()
-
-					if err := generator.Output(ctx, logger, file); err != nil {
-						registerError(fmt.Errorf("failed to output file: %w", err))
-					}
-				}()
-			case <-ourContext.Done():
-				registerError(fmt.Errorf("failed to output file: %w", ourContext.Err()))
-			}
-		}
-	}()
+	drain(ourContext, logger, outputs, &fileWriters, registerError, generator.Output)
 
 	// close all the components once done
 	go func() {
@@ -211,6 +184,25 @@ func (generator *Generator) Run(ctx context.Context, logger *slog.Logger) error 
 // when an error occurs aborts and calls registerError instead.
 // wg is used to keep track of running operations.
 func pipe[S, T any](ctx context.Context, logger *slog.Logger, out chan<- T, in <-chan S, wg *sync.WaitGroup, registerError func(error), f func(context.Context, *slog.Logger, S) (T, error)) {
+	drain(ctx, logger, in, wg, registerError, func(ctx context.Context, logger *slog.Logger, input S) error {
+		output, err := f(ctx, logger, input)
+		if err != nil {
+			return fmt.Errorf("pipe processing failed: %w", err)
+		}
+
+		select {
+		case out <- output:
+		case <-ctx.Done():
+			return fmt.Errorf("pipe output failed: %w", ctx.Err())
+		}
+		return nil
+	})
+}
+
+// drain drains the given channel, and processes f.
+// when an error occurs aborts and calls registerError instead.
+// wg is used to keep track of running operations.
+func drain[T any](ctx context.Context, logger *slog.Logger, in <-chan T, wg *sync.WaitGroup, registerError func(error), f func(context.Context, *slog.Logger, T) error) {
 	wg.Add(1)
 
 	go func() {
@@ -228,21 +220,14 @@ func pipe[S, T any](ctx context.Context, logger *slog.Logger, out chan<- T, in <
 					go func() {
 						defer wg.Done()
 
-						output, err := f(ctx, logger, input)
+						err := f(ctx, logger, input)
 						if err != nil {
-							registerError(fmt.Errorf("pipe processing failed: %w", err))
-						}
-
-						select {
-						case out <- output:
-						case <-ctx.Done():
-							registerError(fmt.Errorf("pipe output failed: %w", ctx.Err()))
-							return
+							registerError(fmt.Errorf("drain processing failed: %w", err))
 						}
 					}()
 
 				case <-ctx.Done():
-					registerError(fmt.Errorf("pipe input failed: %w", ctx.Err()))
+					registerError(fmt.Errorf("drain input failed: %w", ctx.Err()))
 					return
 				}
 			}
