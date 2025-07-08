@@ -9,7 +9,7 @@ description:    You should use empty go structs as the value type for a hashmap.
 draft:          true
 ---
 
-This morning I read a [post on the go blog](https://go.dev/blog/generic-interfaces) which eventually defined a hashmap as:
+This morning I read a [post on the go blog](https://go.dev/blog/generic-interfaces) which eventually implemented a HashSet as:
 
 ```go
 type HashSet[E comparable] map[E]bool
