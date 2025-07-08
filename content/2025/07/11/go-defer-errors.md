@@ -1,6 +1,6 @@
 ---
 title:          Go's defers should not return values
-date:           2025-06-29
+date:           2025-07-11
 author:         Tom Wiesing 
 authorLink:     https://tkw01536.de
 

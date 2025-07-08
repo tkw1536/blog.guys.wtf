@@ -43,6 +43,7 @@ var g = generator.Generator{
 			},
 			goldmark.WithExtensions(
 				extension.GFM,
+				extension.Footnote,
 				highlighting.NewHighlighting(
 					highlighting.WithStyle("monokai"),
 					highlighting.WithFormatOptions(

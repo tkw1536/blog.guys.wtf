@@ -14,7 +14,7 @@ import (
 	"sync/atomic"
 )
 
-// File describes a single file to be created.
+// File describes a single file to be created in the output.
 type File struct {
 	// Path is the relative path from the root of the output directory to this file.
 	//
@@ -22,7 +22,7 @@ type File struct {
 	// Consumers of a File should implement appropriate protections if not needed.
 	Path string
 
-	// Contents are the contents of this file.
+	// Contents holds the contents of the file.
 	Contents []byte
 }
 

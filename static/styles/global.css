@@ -57,3 +57,11 @@ ul.posts li span {
 ul.posts li span::before {
     content: " ⋅ ";
 }
+
+.footnotes > hr{
+    display: none;
+}
+
+body {
+    max-width: 120ch;
+}

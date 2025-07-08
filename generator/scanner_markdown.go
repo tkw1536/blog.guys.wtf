@@ -83,7 +83,7 @@ func NewMarkdownScanner(path string, shouldIndex func(path string, Metadata map[
 	)
 }
 
-// addTargetAndRel adds target="_blank" rel="noopener noreferrer" to all links in the given HTML
+// addTargetAndRel adds target="_blank" rel="noopener noreferrer" to all links in the given HTML, unless they start with '#'
 func addTargetAndRel(dst io.Writer, src io.Reader) error {
 	// updateLink updates a token representing an '<a' starting element.
 	updateLink := func(token *html.Token) {
@@ -108,6 +108,9 @@ func addTargetAndRel(dst io.Writer, src io.Reader) error {
 		}
 
 		if hrefId == -1 {
+			return
+		}
+		if strings.HasPrefix(token.Attr[hrefId].Val, "#") {
 			return
 		}
 
