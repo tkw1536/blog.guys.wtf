@@ -50,9 +50,9 @@ And making a benchmark like:
 // some pseudo-random integers for testing
 var ints [10_000]int
 
-func Benchmark_HashSet(b *testing.B) {
+func Benchmark_HashSetStruct(b *testing.B) {
 	for b.Loop() {
-		set := make(HashSet[int], len(ints))
+		set := make(HashSetStruct[int], len(ints))
 		for _, v := range ints {
 			set.Insert(v)
 		}
@@ -63,7 +63,7 @@ func Benchmark_HashSet(b *testing.B) {
 }
 ```
 
-Writing a second benchmark for `HashSetStruct` and running both benchmarks [^3] gave [^4]:
+Writing a second benchmark for the plain `HashSet` and running both benchmarks [^3] gave [^4]:
 
 ```
 $ go test -bench . -benchmem
