@@ -114,9 +114,9 @@ func (s HashSet[E]) All() iter.Seq[E] {
 
 This in turn means it is unsound for the compiler to optimize the value of `false` away, as there is an observable difference if `false`is written to the map.
 
-So the plain `bool` version cannot possibly be optimized by rhe compiler.
-Together with the easily-overlooked bug in `All` I personally conclude that using a `map[E]struct{}` is probably the better implementation.
-While possibly difficult to read at first, it clearly signals to the compiler and experienced go programmers alike that the values in the map is not actually used. 
+So the plain `bool` version cannot possibly be optimized by the compiler.
+Together with the easily-overlooked bug in `All()` I personally conclude that using a `map[E]struct{}` is the better implementation.
+While possibly difficult to read at first, it clearly signals to the compiler and experienced go programmers alike that the values in the map are not actually used. 
 
 Summing it all up:
 
