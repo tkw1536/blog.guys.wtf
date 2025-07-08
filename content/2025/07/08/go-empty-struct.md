@@ -112,12 +112,16 @@ func (s HashSet[E]) All() iter.Seq[E] {
 }
 ```
 
-This in turn means it is unsound for the compiler to optimize the value of `false` away, as there is an observable difference if false is written to the map.
+This in turn means it is unsound for the compiler to optimize the value of `false` away, as there is an observable difference if `false`is written to the map.
+
+So the plain `bool` version cannot possibly be optimized by rhe compiler.
+Together with the easily-overlooked bug in `All` I personally conclude that using a `map[E]struct{}` is probably the better implementation.
+While possibly difficult to read at first, it clearly signals to the compiler and experienced go programmers alike that the values in the map is not actually used. 
 
 Summing it all up:
 
 - My benchmarks didn't show any significant performance difference between using `map[E]struct{}` and `map[E]bool`.
-- It is a stylistic choice what you want to use, but only `map[E]struct{}` can allow the compiler to optimize.
+- It is in principle a stylistic choice what you want to use, but only `map[E]struct{}` can allow the compiler to optimize and clearly signals intent. 
 - The implementation of the `All()` method on go.dev's blog entry is wrong.
 
 [^1]: Axel Wagner. 7 July 2025. [Generic interfaces - the Go blog](https://web.archive.org/web/20250707170826/https://go.dev/blog/generic-interfaces). 
