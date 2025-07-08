@@ -126,7 +126,7 @@ Summing it all up:
 [^1]: Donald E. Knuth. 1974. Structured Programming with go to Statements. ACM Comput. Surv. 6, 4 (Dec. 1974), 261–301. doi: [10.1145/356635.356640](https://doi.org/10.1145/356635.356640).
 
 [^2]: An interesting sidenote from Knuth's paper is that it is frequently misinterpreted, not all optimization is pre-mature. 
-See for example the blog post ["Revisiting Knuth’s “Premature Optimization” Paper"](https://web.archive.org/web/20250619231836/https://probablydance.com/2025/06/19/revisiting-knuths-premature-optimization-paper/) by *Malte Skarupke* for an interesting summary.
+See for example the blog post ["Revisiting Knuth’s “Premature Optimization” Paper"](https://web.archive.org/web/20250619231836/https://probablydance.com/2025/06/19/revisiting-knuths-premature-optimization-paper/) by *Malte Skarupke*.
 
 [^3]: Full code available [GitHub](https://gist.github.com/tkw1536/f3a6f89f9c49a36f6143a426014630cb). 
 
