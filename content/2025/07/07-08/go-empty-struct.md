@@ -9,7 +9,7 @@ description:    You should use empty go structs as the value type for a hashmap.
 draft:          true
 ---
 
-This morning I read a [post on the go blog](https://go.dev/blog/generic-interfaces) which eventually implemented a HashSet as:
+This morning I read a post on the go blog [^1] which eventually implemented a HashSet as:
 
 ```go
 type HashSet[E comparable] map[E]bool
@@ -24,8 +24,8 @@ Having written a bunch of go myself, this immediately made me ask the question:
 
 > Why didn't they use a `map[E]struct{}` ?
 
-Knuth stated in his paper [^1] `We should forget about small efficiencies, say about 97% of the time: premature optimization is the root of all evil`.
-So it this a "premature optimization", or is it one of the 3% where the optimization is worthwhile [^2]?
+Knuth stated in his paper [^2] `We should forget about small efficiencies, say about 97% of the time: premature optimization is the root of all evil`.
+So it this a "premature optimization", or is it one of the 3% where the optimization is worthwhile [^3]?
 
 I asked a friend who works with a lot of go, and he pretty much said just that:
 
@@ -63,7 +63,7 @@ func Benchmark_HashSetStruct(b *testing.B) {
 }
 ```
 
-Writing a second benchmark for the plain `HashSet` and running both benchmarks [^3] gave [^4]:
+Writing a second benchmark for the plain `HashSet` and running both benchmarks [^4] gave [^5]:
 
 ```
 $ go test -bench . -benchmem
@@ -93,7 +93,7 @@ set[69] = false
 ```
 
 Here the value of `false` is explicitly used. 
-Because the HashSet struct does not hide its' implementation in an unexported field this is perfectly legitimate[^5]. 
+Because the `HashSet` struct does not hide the underlying map in an unexported field this is perfectly legitimate [^6]. 
 What happens in such a case?
 
 For one, the implementation of the `All` method would be wrong, as it would still return both keys. 
@@ -121,18 +121,18 @@ Summing it all up:
 
 - My benchmarks didn't show any significant performance difference between using `map[E]struct{}` and `map[E]bool`.
 - It is a stylistic choice what you want to use, but only `map[E]struct{}` can allow the compiler to optimize.
-- The implementation of the `All()` method is wrong.
+- The implementation of the `All()` method on go.dev's blog entry is wrong.
 
-[^1]: Donald E. Knuth. 1974. Structured Programming with go to Statements. ACM Comput. Surv. 6, 4 (Dec. 1974), 261–301. doi: [10.1145/356635.356640](https://doi.org/10.1145/356635.356640).
+[^1]: Axel Wagner. 7 July 2025. [Generic interfaces - the Go blog](https://web.archive.org/web/20250707170826/https://go.dev/blog/generic-interfaces). 
 
-[^2]: An interesting sidenote from Knuth's paper is that it is frequently misinterpreted, not all optimization is pre-mature. 
+[^2]: Donald E. Knuth. 1974. Structured Programming with go to Statements. ACM Comput. Surv. 6, 4 (Dec. 1974), 261–301. doi: [10.1145/356635.356640](https://doi.org/10.1145/356635.356640).
+
+[^3]: An interesting sidenote from Knuth's paper is that it is frequently misinterpreted, not all optimization is pre-mature. 
 See for example the blog post ["Revisiting Knuth’s “Premature Optimization” Paper"](https://web.archive.org/web/20250619231836/https://probablydance.com/2025/06/19/revisiting-knuths-premature-optimization-paper/) by *Malte Skarupke*.
 
-[^3]: Full code available [GitHub](https://gist.github.com/tkw1536/f3a6f89f9c49a36f6143a426014630cb). 
+[^4]: Full code available [GitHub](https://gist.github.com/tkw1536/f3a6f89f9c49a36f6143a426014630cb). 
 
-[^4]: Part of the benchmark output omitted for brevity. 
+[^5]: Part of the benchmark output omitted for brevity. 
 
-[^5]: Another means of making this illegitimate might be to write human-readable documentation that explicitly forbids writing to the underlying map directly.
+[^6]: Another means of making this illegitimate might be to write human-readable documentation that explicitly forbids writing to the underlying map directly.
 But this could not be understood by the compiler, and also isn't being done here. 
-
-[^6]: A correct implementation of the `All` method might be 
