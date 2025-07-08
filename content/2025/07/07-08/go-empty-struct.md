@@ -1,12 +1,10 @@
 ---
-title:          Using Empty Go Structs for a Hashmap
+title:          Using Empty Go Structs for a Hashset
 date:           2025-07-08
 author:         Tom Wiesing 
 authorLink:     https://tkw01536.de
 
 description:    You should use empty go structs as the value type for a hashmap.
-
-draft:          true
 ---
 
 This morning I read a post on the go blog [^1] which eventually implemented a HashSet as:
@@ -25,7 +23,7 @@ Having written a bunch of go myself, this immediately made me ask the question:
 > Why didn't they use a `map[E]struct{}` ?
 
 Knuth stated in his paper [^2] `We should forget about small efficiencies, say about 97% of the time: premature optimization is the root of all evil`.
-So it this a "premature optimization", or is it one of the 3% where the optimization is worthwhile [^3]?
+So is this a "premature optimization", or is it one of the 3% where the optimization is worthwhile [^3]?
 
 I asked a friend who works with a lot of go, and he pretty much said just that:
 
