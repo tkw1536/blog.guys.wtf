@@ -76,8 +76,7 @@ So does this mean that it's not worth it?
 For one, this benchmark is rather synthetic and only tests insertion and lookup.
 Even leaving alone this particular benchmark it can be said that since go is a compiled language, optimizations should happen under the hood. 
 If the compiler could optimize both cases, it would make it mostly a stylistic choice if you want to use `struct{}` or `bool`. 
-Specifically in this case both implementation expose the same methods - so here it doesn't matter. 
-
+Furthermore in this case both implementations expose the same method set - meaning the stylistic choice would not effect anything outside the HashSet implementation itself. 
 
 But how could the compiler optimize the `bool` case?
 It would have to prove that the `false` value is never used. 
@@ -94,9 +93,9 @@ Here the value of `false` is explicitly used.
 Because the `HashSet` struct does not hide the underlying map in an unexported field this is perfectly legitimate [^6]. 
 What happens in such a case?
 
-For one, the implementation of the `All` method would be wrong, as it would still return both keys. 
+For one, the implementation of the `All` method would be wrong, as it would suddenly return the keys `42` and `69`. 
 It does not check if keys in the map are `true`, but blindly returns all keys.
-A correct implementation of the `All()` method requires checking if the associated value is true:
+A correct implementation of the `All()` method requires such a check:
 
 ```go
 func (s HashSet[E]) All() iter.Seq[E] {
