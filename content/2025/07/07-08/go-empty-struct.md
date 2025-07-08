@@ -4,7 +4,7 @@ date:           2025-07-08
 author:         Tom Wiesing 
 authorLink:     https://tkw01536.de
 
-description:    You should use empty go structs as the value type for a hashmap.
+description:    Why you might want to use empty go structs as the value type for a hashset.
 ---
 
 This morning I read a post on the go blog [^1] which eventually implemented a HashSet as:
