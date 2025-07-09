@@ -31,7 +31,7 @@ I asked a friend who works with a lot of go, and he pretty much said just that:
 > 
 > To me it always felt like an unnecessary optimization 
 
-Let us investigate this by actually actually implementing a struct-based version:
+Regrardless, I decided to investigate by actually implementing a struct-based version:
 
 ```go
 type HashSetStruct[E comparable] map[E]struct{}
