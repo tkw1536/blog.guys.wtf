@@ -4,7 +4,7 @@ date:           2025-07-13
 author:         Tom Wiesing 
 authorLink:     https://tkw01536.de
 
-description:    An overview of why and how I designed and wrote a tool called ggman to manage all my git repositories. 
+description:    An overview of why and how I wrote a tool called ggman to manage all my git repositories. 
 
 draft:          true
 ---
@@ -65,9 +65,25 @@ In order to fit my own workflow, and to prevent me having to rewrite the tool ag
 - remain free of provider-specific code; and
 - not store any repository-specific data outside of the repositories themselves (enabling the user to switch back to only git at any point).
 
-## Architecture of ggman
+## the design of ggman
 
-(to be written)
+(this paragraph isn't done)
+
+I want to give a brief introduction as to the design of ggman. 
+To this end, I feel it is simplest to show how it is used. 
+
+The source code of ggman lives [on GitHub](https://github.com/tkw1536/ggman), the built program consists of a single binary that is dropped into the user's `$PATH` to install.
+The binary optionally requires that the user has `git` installed, but will automatically fall back to the [go-git](https://github.com/go-git/go-git) library if not. 
+
+Once installed, ggman manages all git repositories inside a given root directory, and automatically sets up new repositories relative to the URLs they are cloned from. 
+This root folder defaults to `~/Projects` but can be customized using the `$GGROOT` environment variable. 
+
+- TODO: `ggman clone`
+- TODO: `ggman ls` and filters
+- TODO: `ggcd` alias
+
+ggman has lots more functionality, but that feels like a little bit too much for this post. 
+I encourage you to have a look at the [README](https://github.com/tkw1536/ggman?tab=readme-ov-file#ggman) or ask me if you're interested. 
 
 ## Conclusion
 
@@ -75,5 +91,6 @@ And that is already all I want to say for now, thank you for reading what basica
 
 In summary: I work with lots of git repositories.
 I wrote a tool called `ggman` to maintain and expand a local directory structure of all of these. 
-It can also run actions (such as git clone, git pull) on groups of them at once. 
+It can locate where specific repositories are cloned to, and run operations such as `git pull` or `git push` across all of them. 
+
 Feel free to try it out and give me feedback at https://github.com/tkw1536/ggman. 
