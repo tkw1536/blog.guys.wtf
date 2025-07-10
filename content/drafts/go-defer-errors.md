@@ -9,6 +9,8 @@ description:    Why 'defer' statements in go can lead to silencing errors.
 draft:          true
 ---
 
+To be finished. 
+
 Consider an off-the-shelf go program which wants to marshal some data into a file.
 It might implement this functionality using code like the following:
 
