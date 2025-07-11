@@ -7,6 +7,7 @@ import (
 	"generator/generator"
 	"html/template"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -97,6 +98,38 @@ func main() {
 
 	// create a new logger
 	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+
+	// running with DEBUG=1 starts a server
+	if os.Getenv("DEBUG") != "" {
+		var server http.Server
+		server.Addr = "localhost:8080"
+
+		g.Output, server.Handler = generator.NewDebugServer()
+
+		done := make(chan error, 1)
+		go func() {
+			logger.Info("debug server listening", "addr", server.Addr)
+			done <- server.ListenAndServe()
+		}()
+
+		if err := g.Run(ctx, logger); err != nil {
+			exitCode = 1
+		}
+
+		if exitCode != 0 {
+			return
+		}
+
+		go func() {
+			<-ctx.Done()
+			server.Close()
+		}()
+
+		err := <-done
+		logger.Info("debug server closed", "err", err)
+
+		return
+	}
 
 	// and run
 	if err := g.Run(ctx, logger); err != nil {
