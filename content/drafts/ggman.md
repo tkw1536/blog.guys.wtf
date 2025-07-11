@@ -88,14 +88,17 @@ In particular, I decided it should:
 - remain free of repository provider-specific code; and
 - not store any repository-specific data outside of the repositories themselves (enabling the user to switch back to only git at any point).
 
-## The design of ggman
-
-The source code of ggman lives [on GitHub](https://github.com/tkw1536/ggman), resulting in a single binary that is dropped into the user's `$PATH` to install.
+In order to explain how `ggman` is designed to achieve these goals, I feel like it is best to describe the how to install and use it.
+The source code of `ggman` lives [on GitHub](https://github.com/tkw1536/ggman), resulting in a single binary that is dropped into the user's `$PATH` to install.
 The binary optionally requires that the user has `git` installed, but will automatically fall back to the [go-git](https://github.com/go-git/go-git) library if not. 
+They user can optionally configure several shell aliases, by invoking and evaluating the output of  `ggman shellrc` in their shell's profile.
 
-In order to explain how ggman is designed to achieve the above goals, I feel like it is best to describe the most common usage. 
-Once installed, ggman manages all git repositories inside a given root directory, and automatically sets up new repositories relative to the URLs they are cloned from. 
+
+## Cloning repositories with ggman
+
+Once installed, `ggman` manages all git repositories inside a given root directory, and automatically sets up new repositories relative to the URLs they are cloned from. 
 This root folder defaults to `~/Projects`, but can be customized using a `$GGROOT` environment variable.
+
 
 The first `ggman` command users will likely interact with is one like the following:
 
@@ -119,8 +122,17 @@ It achieves this using several steps:
     Here, the components of a URL are the hostname, the username and '/'-separated elements of the path.
     A username of `git` as well as a trailing suffix of `.git` are dropped.
 
-    The `ggman comps` command is a utility to print out exactly these:
+    Some examples:
 
+    | URL                          | Components                     |
+    |------------------------------|--------------------------------|
+    | `git@github.com/user/repo`   | `github.com`, `user`, `repo`   |
+    | `github.com/hello/world.git` | `github.com`, `hello`, `world` |
+    | `github.com/some/repo`       | `gitlab.com`, `some`, `repo`   |
+    | `user@server.com:repo.git`   | `server.com`, `user`, `repo`   |
+    
+    The `ggman comps` command is a utility that allows us to print out components of a specific URL:
+    
     ```
     $ ggman comps https://github.com/tkw1536/ggman.git
     github.com
@@ -128,7 +140,7 @@ It achieves this using several steps:
     ggman 
     ```
 
-    Because of the definition of components, these means it is also possible to pass the ssh clone URL:
+    Notice how the components of a URL are identical if cloned via SSH:
 
     ```
     $ ggman comps git@github.com:tkw1536/ggman.git
@@ -137,15 +149,7 @@ It achieves this using several steps:
     ggman
     ```
 
-    Components are the key abstraction that allow ggman to remain provider independent - as they work with almost all git hosts out there.
-    (TODO: Clone URLs)
-
-    | URL                          | Components                     |
-    |------------------------------|--------------------------------|
-    | `git@github.com/user/repo`   | `github.com`, `user`, `repo`   |
-    | `github.com/hello/world.git` | `github.com`, `hello`, `world` |
-    | `github.com/some/repo`       | `gitlab.com`, `some`, `repo`   |
-    | `user@server.com:repo.git`   | `server.com`, `user`, `repo`   |
+    Components are the key abstraction that allow ggman to remain provider independent - as they work with (almost) any repository host. 
 
 2.
     Assign the repository a local path using these components, and create parent folders as needed. 
@@ -170,22 +174,83 @@ It achieves this using several steps:
 4.
     Finally invoke the git command to actually clone the repository.
 
+## Finding and performing actions on repositories
 
+But `ggman` can not add clone new repositories. 
+It can also perform actions across existing repositories.
+Actions in principle take the form ```ggman [FILTERS] ACTION```. 
 
+The supported actions are things which effectively map to plain git commands, such as:
 
+- `ggman ls`, which prints a list of local repositories;
+- `ggman pull`, which pulls changes from remotes into the local repositories;
+- `ggman push`, which pushes changes to remotes remote repositories.
+- `ggman exec COMMAND` which directly invokes an external command.
 
+By default, any action will act on all repositories existing in some sub-directory of `$GGROOT`. 
+For example:
 
+```
+$ ggman ls
+/Users/whoever/github.com/hello/world
+/Users/whoever/github.com/tkw1536/ggman
+/Users/whoever/github.com/tkw1536/tkw01536.de
+/Users/whoever/gitlab.com/lorem/ipsum
+```
 
+It is also possible to only act on a subset of repositories using a "FILTER" argument.
+The simplest one is the `--for` filter, which fuzzy matches against repositories.
 
+For example:
 
+```
+$ ggman --for github.com ls
+/Users/whoever/github.com/hello/world
+/Users/whoever/github.com/tkw1536/ggman
+/Users/whoever/github.com/tkw1536/tkw01536.de
+```
 
-- TODO: `ggman clone`
-- TODO: `ggman ls` and filters
-- TODO: `ggcd` alias
+This command lists only repositories that match "github.com" in their URL. 
+As the matching is fuzzy, it also allows to omit characters or components. 
+For example:
 
-ggman has a lot more functionality, but that feels like a little bit too much for this post. 
-I encourage you to have a look at the [README](https://github.com/tkw1536/ggman?tab=readme-ov-file#ggman). 
-You can also ask me if you're interested. 
+```
+$ ggman --for lo/ips ls
+/Users/whoever/gitlab.com/lorem/ipsum
+```
+
+will only match the `lorem/ipsum` repository. 
+
+For convenience ggman provides two shell aliases that make use of the `--for` filter:
+
+-
+    `ggcd PATTERN` which finds a repository matching a given pattern and cds into it. 
+    For example, `ggcd lo/ip` would cd into `/Users/whoever/gitlab.com/lorem/ipsum`. 
+
+    This makes it extremely simple to find a project belonging to a repository and working on it. 
+
+-
+    `ggcode PATTERN`, which is like `ggcd` except that it open a [Visual Studio Code](https://code.visualstudio.com/) instance in the desired directory. 
+    This makes it extremely quick to start coding on a specific project, without having to navigate through various user interfaces. 
+
+There are also other filters, but I will omit them in this post. 
+
+## Other ggman functionality
+
+`ggman` has a lot more functionality, but describing everything would make this blog post much longer. 
+
+I would however like to quickly mention a couple of other commands:
+
+-
+    `ggman web` which opens the current repository in a web browser. 
+    This is useful to quickly use GitHub's web interface to look at issues, or check on the status of CI. 
+-
+    `ggman relocate` which moves cloned repositories into the paths that `ggman clone` would have cloned them to.
+-
+    `ggman fix` which updates remote URLs to use their canonical variant. 
+ 
+
+If you are interested I encourage you to have a look at the [README](https://github.com/tkw1536/ggman?tab=readme-ov-file#ggman) or ask me if you're interested. 
 
 ## Conclusion
 
