@@ -39,51 +39,153 @@ But as GitHub was not our private GitLab instance, `lmh` didn't support it.
 Besides, `lmh` was very much focused on the building process and was dockerized - that seemed overkill for the task at hand. 
 
 So I wrote a very simple tool in Python I called [GitManager](https://github.com/tkw1536/GitManager) - that did exactly this. 
-It had a configuration file of which repositories to clone where, and supported operations like `git pull` and `git push` across all clones. 
-This made my job simpler, but was still annoying to work with as I had to update a configuration file every time I got a new repository. 
-Nonetheless I ended up using it for all my clones for a couple years. 
+It was used by setting up a configuration file like this:
 
-## Design Goals for ggman
+```
+> Projects 
+>> tkw1536
+https://github.com/tkw1536/GitManager.git
+https://github.com/tkw1536/tkw01536.de.git
+https://github.com/tkw1536/guys.wtf.git
+```
+
+This file says to create a "Projects" folder.
+Then inside it, create a "tkw1536" subfolder. 
+Finally clone the three git repositories into this folder. 
+
+I could then use commands like `git-manager pull` or `git-manager push` to pull or push all local repositories. 
+This made my job simpler, but I now had to maintain this configuration file. 
+I eventually added a function to automatically discover newly cloned repositories and rewrite the configuration file for me. 
+This helped a bit more, and I ended up using `git-manager` for all my clones for a couple years. 
+
+## Design goals for ggman
 
 Fast forward again a couple more years to 2019 and I got annoyed at needing to update that configuration file. 
 So I decided to redo my repository management again. 
 
 I looked around and there were other tools at the time - however these usually had some downsides:
-- they were limited to one repository provider (e.g. the [GitHub CLI](http://cli.github.com) only worked with GitHub); or
-- They enforced a flat directory structure (e.g everything goes directly under a `Projects` folder); or
-- The tool was only available from within an IDE or GUI.
 
-All of these made them unfit for my workflow. 
-As I was starting out with [go](https://go.dev) at the time, I decided to use the opportunity to learn the language and start writing my own tool. 
-I couldn't think of a good name, and ended up with `ggman` - with "man" standing for "manager" and the gs standing for "git" and "go". 
+1. They were limited to one repository provider. 
+For example, the [GitHub CLI](http://cli.github.com) only worked with GitHub repositories. 
+At the same time, the [GitLab CLI](https://docs.gitlab.com/editor_extensions/gitlab_cli/) only worked with GitLab repositories. 
 
-In order to fit my own workflow, and to prevent me having to rewrite the tool again on the future, I decided that ggman should:
+2. Tools typically encouraged a flat directory structure. 
+For example, they cloned repositories directly under a `Projects` folder.
+Two repositories that had little to do with each other might end up on disk directly next to each other. 
+
+3. Some tools were only available from within an IDE or GUI.
+
+All of these made felt like annoying downsides.  
+As I was starting out with [go](https://go.dev) at the time, I decided to use the opportunity to learn the language properly and start writing my own tool. 
+I couldn't think of a good name, I eventually settled on `ggman` - with "man" standing for "manager" and the gs standing for "git" and "go". 
+
+In order to best fit my own workflow, and to prevent me having to rewrite the tool again on the future, I decided on several goals for `ggman`. 
+In particular, I decided it should:
 
 - be command-line first;
 - be simple to install, configure and use;
 - encourage an obvious hierarchical directory structure, but remain fully functional with any directory structure;
-- remain free of provider-specific code; and
+- remain free of repository provider-specific code; and
 - not store any repository-specific data outside of the repositories themselves (enabling the user to switch back to only git at any point).
 
-## the design of ggman
+## The design of ggman
 
-(this paragraph isn't done)
-
-I want to give a brief introduction as to the design of ggman. 
-To this end, I feel it is simplest to show how it is used. 
-
-The source code of ggman lives [on GitHub](https://github.com/tkw1536/ggman), the built program consists of a single binary that is dropped into the user's `$PATH` to install.
+The source code of ggman lives [on GitHub](https://github.com/tkw1536/ggman), resulting in a single binary that is dropped into the user's `$PATH` to install.
 The binary optionally requires that the user has `git` installed, but will automatically fall back to the [go-git](https://github.com/go-git/go-git) library if not. 
 
+In order to explain how ggman is designed to achieve the above goals, I feel like it is best to describe the most common usage. 
 Once installed, ggman manages all git repositories inside a given root directory, and automatically sets up new repositories relative to the URLs they are cloned from. 
-This root folder defaults to `~/Projects` but can be customized using the `$GGROOT` environment variable. 
+This root folder defaults to `~/Projects`, but can be customized using a `$GGROOT` environment variable.
+
+The first `ggman` command users will likely interact with is one like the following:
+
+```
+$ ggman clone https://github.com/tkw1536/ggman.git
+Cloning "git@github.com:tkw1536/ggman.git" into "/Users/whoever/github.com/tkw1536/ggman" ...
+Cloning into '/Users/whoever/github.com/tkw1536/ggman'...
+remote: Enumerating objects: 133, done.
+remote: Counting objects: 100% (133/133), done.
+remote: Compressing objects: 100% (130/130), done.
+remote: Total 133 (delta 16), reused 23 (delta 0), pack-reused 0 (from 0)
+Receiving objects: 100% (133/133), 188.95 KiB | 355.00 KiB/s, done.
+Resolving deltas: 100% (16/16), done.
+```
+
+The `ggman clone` command is intended to clone a repository into the local directory structure. 
+It achieves this using several steps:
+
+1.
+    Parse the provided into its' so-called URL components.
+    Here, the components of a URL are the hostname, the username and '/'-separated elements of the path.
+    A username of `git` as well as a trailing suffix of `.git` are dropped.
+
+    The `ggman comps` command is a utility to print out exactly these:
+
+    ```
+    $ ggman comps https://github.com/tkw1536/ggman.git
+    github.com
+    tkw1536
+    ggman 
+    ```
+
+    Because of the definition of components, these means it is also possible to pass the ssh clone URL:
+
+    ```
+    $ ggman comps git@github.com:tkw1536/ggman.git
+    github.com
+    tkw1536
+    ggman
+    ```
+
+    Components are the key abstraction that allow ggman to remain provider independent - as they work with almost all git hosts out there.
+    (TODO: Clone URLs)
+
+    | URL                          | Components                     |
+    |------------------------------|--------------------------------|
+    | `git@github.com/user/repo`   | `github.com`, `user`, `repo`   |
+    | `github.com/hello/world.git` | `github.com`, `hello`, `world` |
+    | `github.com/some/repo`       | `gitlab.com`, `some`, `repo`   |
+    | `user@server.com:repo.git`   | `server.com`, `user`, `repo`   |
+
+2.
+    Assign the repository a local path using these components, and create parent folders as needed. 
+    In this case the target path would be `$GGROOT/github.com/tkw1536/ggman`.
+    The `ggman clone` command above would create `$GGROOT/github.com` and `$GGROOT/github.com/tkw1536` folders as needed.   
+
+3.
+    Figure out which URL to clone the repository from.
+    This is achieved by turning the components back into a form which git understands. 
+
+    We can inspect this using the `ggman canon` command. 
+    In our case:
+
+    ```
+    $ ggman canon https://github.com/tkw1536/ggman.git
+    git@github.com:tkw1536/ggman.git
+    ```
+
+    As you can see, ggman defaults to cloning using an `ssh` clone URL. 
+    This can be configured using a so-called `CANSPEC` (short for "canonization specification"), but I won't into detail here.
+
+4.
+    Finally invoke the git command to actually clone the repository.
+
+
+
+
+
+
+
+
+
 
 - TODO: `ggman clone`
 - TODO: `ggman ls` and filters
 - TODO: `ggcd` alias
 
-ggman has lots more functionality, but that feels like a little bit too much for this post. 
-I encourage you to have a look at the [README](https://github.com/tkw1536/ggman?tab=readme-ov-file#ggman) or ask me if you're interested. 
+ggman has a lot more functionality, but that feels like a little bit too much for this post. 
+I encourage you to have a look at the [README](https://github.com/tkw1536/ggman?tab=readme-ov-file#ggman). 
+You can also ask me if you're interested. 
 
 ## Conclusion
 
