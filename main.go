@@ -54,7 +54,9 @@ var g = generator.Generator{
 			),
 			goldmark.WithRendererOptions(
 			//	html.WithUnsafe(),
-			)),
+			),
+		),
+		generator.NewRedirectScanner(map[string]string{}),
 	},
 
 	Indexes: []generator.IndexTemplate{
