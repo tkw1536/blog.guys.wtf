@@ -12,8 +12,6 @@ draft:          true
 Both at work and in my free time I interact with lots of different git repositories - across my machines I usually have about 100 different repositories checked out. 
 Maintaining these clones by hand might be possible, but I am way too lazy for that and have written a [go](http://go.dev) program called [ggman](https://github.com/tkw1536/ggman) to manage all of these in a simple way. 
 
-In this post I want to write about how this tool came to be, and give a brief introduction as to it's design and usage.   
-
 ## Lots of repositories
 
 Sometime around late 2013 when studying at university I was contributing to a research project called [MathHub](https://mathhub.info/) as part of working in a research group. 
