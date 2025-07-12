@@ -9,10 +9,10 @@ description:    An overview of why and how I wrote a tool called ggman to manage
 draft:          true
 ---
 
-Both at work and in my free time I interact with lots of different git repositories - across my machines I usually have 100 different repositories checked out. 
+Both at work and in my free time I interact with lots of different git repositories - across my machines I usually have about 100 different repositories checked out. 
 Maintaining these clones by hand might be possible, but I am way too lazy for that and have written a [go](http://go.dev) program called [ggman](https://github.com/tkw1536/ggman) to manage all of these in a simple way. 
 
-In this post I want to write about how this tool came to be, and give a brief introduction into it's design and usage.   
+In this post I want to write about how this tool came to be, and give a brief introduction as to it's design and usage.   
 
 ## Lots of repositories
 
@@ -80,7 +80,9 @@ As I was starting out with [go](https://go.dev) at the time, I decided to use th
 I couldn't think of a good name, I eventually settled on `ggman` - with "man" standing for "manager" and the gs standing for "git" and "go". 
 
 In order to best fit my own workflow, and to prevent me having to rewrite the tool again on the future, I decided on several goals for `ggman`. 
-In particular, I decided it should:
+As I have been using `ggman` ever since I designed it without the need for a major rewrite[^1], I consider it successful. 
+
+In particular, I decided `ggman` should:
 
 - be command-line first;
 - be simple to install, configure and use;
@@ -261,3 +263,5 @@ I wrote a tool called `ggman` to maintain and expand a local directory structure
 It can locate where specific repositories are cloned to, and run operations such as `git pull` or `git push` across all of them. 
 
 Feel free to try it out and give me feedback at https://github.com/tkw1536/ggman. 
+
+[^1]: Unless you count me changing several implementation details under the hood, but I do not.   
