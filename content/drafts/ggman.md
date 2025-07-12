@@ -106,8 +106,8 @@ The first `ggman` command users will likely interact with is one like the follow
 
 ```
 $ ggman clone https://github.com/tkw1536/ggman.git
-Cloning "git@github.com:tkw1536/ggman.git" into "/Users/whoever/github.com/tkw1536/ggman" ...
-Cloning into '/Users/whoever/github.com/tkw1536/ggman'...
+Cloning "git@github.com:tkw1536/ggman.git" into "/Users/whoever/Projects/github.com/tkw1536/ggman" ...
+Cloning into '/Users/whoever/Projects/github.com/tkw1536/ggman'...
 remote: Enumerating objects: 133, done.
 remote: Counting objects: 100% (133/133), done.
 remote: Compressing objects: 100% (130/130), done.
@@ -194,10 +194,10 @@ For example:
 
 ```
 $ ggman ls
-/Users/whoever/github.com/hello/world
-/Users/whoever/github.com/tkw1536/ggman
-/Users/whoever/github.com/tkw1536/tkw01536.de
-/Users/whoever/gitlab.com/lorem/ipsum
+/Users/whoever/Projects/github.com/hello/world
+/Users/whoever/Projects/github.com/tkw1536/ggman
+/Users/whoever/Projects/github.com/tkw1536/tkw01536.de
+/Users/whoever/Projects/gitlab.com/lorem/ipsum
 ```
 
 It is also possible to only act on a subset of repositories using a "FILTER" argument.
@@ -207,9 +207,9 @@ For example:
 
 ```
 $ ggman --for github.com ls
-/Users/whoever/github.com/hello/world
-/Users/whoever/github.com/tkw1536/ggman
-/Users/whoever/github.com/tkw1536/tkw01536.de
+/Users/whoever/Projects/github.com/hello/world
+/Users/whoever/Projects/github.com/tkw1536/ggman
+/Users/whoever/Projects/github.com/tkw1536/tkw01536.de
 ```
 
 This command lists only repositories that match "github.com" in their URL. 
@@ -218,7 +218,7 @@ For example:
 
 ```
 $ ggman --for lo/ips ls
-/Users/whoever/gitlab.com/lorem/ipsum
+/Users/whoever/Projects/gitlab.com/lorem/ipsum
 ```
 
 will only match the `lorem/ipsum` repository. 
@@ -227,7 +227,7 @@ For convenience ggman provides two shell aliases that make use of the `--for` fi
 
 -
     `ggcd PATTERN` which finds a repository matching a given pattern and cds into it. 
-    For example, `ggcd lo/ip` would cd into `/Users/whoever/gitlab.com/lorem/ipsum`. 
+    For example, `ggcd lo/ip` would cd into `/Users/whoever/Projects/gitlab.com/lorem/ipsum`. 
 
     This makes it extremely simple to find a project belonging to a repository and working on it. 
 
