@@ -235,7 +235,8 @@ For convenience ggman provides two shell aliases that make use of the `--for` fi
     `ggcode PATTERN`, which is like `ggcd` except that it open a [Visual Studio Code](https://code.visualstudio.com/) instance in the desired directory. 
     This makes it extremely quick to start coding on a specific project, without having to navigate through various user interfaces. 
 
-There are also other filters, but I will omit them in this post. 
+Another filter is the special `--here` filter which only matches the repository in the current directory (even if not under `$GGROOT`). 
+There are also other filters, but they are not important here.  
 
 ## Other ggman functionality
 
@@ -248,8 +249,10 @@ I would however like to quickly mention a couple of other commands:
     This is useful to quickly use GitHub's web interface to look at issues, or check on the status of CI. 
 -
     `ggman relocate` which moves cloned repositories into the paths that `ggman clone` would have cloned them to.
+    Together with the `--here` filter allows moving repositories not originally within `$GGROOT` into the structure. 
 -
     `ggman fix` which updates remote URLs to use their canonical variant. 
+    Useful e.g. if some repositories were manually cloned using `https`. 
  
 
 If you are interested I encourage you to have a look at the [README](https://github.com/tkw1536/ggman?tab=readme-ov-file#ggman) or ask me if you're interested. 
