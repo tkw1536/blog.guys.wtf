@@ -5,8 +5,6 @@ author:         Tom Wiesing
 authorLink:     https://tkw01536.de
 
 description:    An overview of why and how I wrote a tool called ggman to manage all my git repositories. 
-
-draft:          true
 ---
 
 Both at work and in my free time I interact with lots of different git repositories - across my machines I usually have about 100 different repositories checked out. 
