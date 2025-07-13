@@ -57,9 +57,13 @@ var g = generator.Generator{
 			),
 		),
 		generator.NewRedirectScanner(map[string]string{
+			// legacy URLs
 			"2016/02/01/curse-of-the-doctype": "/curse-of-the-doctype/",
 			"2016/09/28/a-rreally-bad-idea":   "/a-rreally-bad-idea/",
 			"2025/07/08/go-empty-struct":      "/go-empty-struct/",
+
+			// published drafts
+			"drafts/ggman": "/ggman",
 		}),
 	},
 
