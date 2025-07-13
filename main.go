@@ -56,7 +56,11 @@ var g = generator.Generator{
 			//	html.WithUnsafe(),
 			),
 		),
-		generator.NewRedirectScanner(map[string]string{}),
+		generator.NewRedirectScanner(map[string]string{
+			"2016/02/01/curse-of-the-doctype": "/curse-of-the-doctype/",
+			"2016/09/28/a-rreally-bad-idea":   "/a-rreally-bad-idea/",
+			"2025/07/08/go-empty-struct":      "/go-empty-struct/",
+		}),
 	},
 
 	Indexes: []generator.IndexTemplate{
