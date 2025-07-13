@@ -17,27 +17,27 @@ Maintaining these clones by hand might be possible, but I am way too lazy for th
 Sometime around late 2013 when studying at university I was contributing to a research project called [MathHub](https://mathhub.info/) as part of working in a research group. 
 As part of the project, the group created various different [git repositories](https://en.wikipedia.org/wiki/Git) on a private [GitLab](https://about.gitlab.com) instance `gl.mathhub.info` that held source code in a [DSL](https://en.wikipedia.org/wiki/Domain-specific_language). 
 When working with this content, it was normal for me and others to constantly have somewhere between 20 and 50 repositories organized in different gitlab groups cloned on our machines. 
-We then built various other content from these source files. 
+We then built various other content from these sources. 
 
 While the `git` client could take care of the actual cloning, it soon became clear that manually maintaining these clones by hand was tedious and needed tool support. 
 For this purpose we ended up building a tool in Python -- called [LocalMathHub](https://github.com/MathHubInfo/Legacy-localmh) or `lmh` for short -- to maintain a local tree of cloned repositories, `git clone`ing and `git pull`ing them as needed. 
-I took over building `lmh` sometime in early 2014. 
+I took over `lmh` sometime in early 2014. 
 
 `lmh` cloned the various repositories into a structure that mirrored the repository / group structure on the GitLab instance.
 For instance the repository `gl.mathhub.info/hello/world` would end up in a folder `$HOME/MathHub/hello/world`, the repository `meta/inf` would end up in a folder `$HOME/MathHub/meta/inf` and so on.
-It furthermore supported our domain-specific build processes, to create research data. 
-To this end, `lmh` also resolved dependencies between repositories, acting very much like our own package manager similar to [npm](https://www.npmjs.com) or [pip](https://pypi.org/project/pip/).  
+It furthermore supported our domain-specific build processes, deriving several research assets. 
+To this end, `lmh` resolved dependencies between repositories, acting very much like our own package manager similar to [npm](https://www.npmjs.com) or [pip](https://pypi.org/project/pip/).
 Our building processes also required a full [LaTeX](https://en.wikipedia.org/wiki/LaTeX) installation, so the tool ended up being [Docker](https://www.docker.com)ized. 
 
 ## Writing GitManager 
 
-Fast forward to a couple years later to 2016 and I was working with lots of different code in lots of different repositories from GitHub. 
+Fast forward to a couple years later to 2016 and I was working with lots of different code in lots of different repositories from [GitHub](https://github.com). 
 I liked a somewhat organized hard disk, so I again wanted to have a local tree mirroring the structure of repositories on GitHub. 
 But as GitHub was not our private GitLab instance, `lmh` didn't support it.
-Besides, `lmh` was very much focused on the building process and was dockerized - that seemed overkill for the task at hand. 
+Besides, `lmh` was very much focused on our specific building process and was dockerized - that seemed overkill for the task at hand. 
 
 So I wrote a very simple tool in Python I called [GitManager](https://github.com/tkw1536/GitManager) - that did exactly this. 
-It was used by setting up a configuration file like this:
+It was used by setting up a configuration file like:
 
 ```
 > Projects 
@@ -51,7 +51,7 @@ This file says to create a "Projects" folder.
 Then inside it, create a "tkw1536" subfolder. 
 Finally clone the three git repositories into this folder. 
 
-I could then use commands like `git-manager pull` or `git-manager push` to pull or push all local repositories. 
+With the help of GitManager I could also use commands like `git-manager pull` or `git-manager push` to pull or push all local repositories. 
 This made my job simpler, but I now had to maintain this configuration file. 
 I eventually added a function to automatically discover newly cloned repositories and rewrite the configuration file for me. 
 This helped a bit more, and I ended up using `git-manager` for all my clones for a couple years. 
@@ -59,13 +59,13 @@ This helped a bit more, and I ended up using `git-manager` for all my clones for
 ## Design goals for ggman
 
 Fast forward again a couple more years to 2019 and I got annoyed at needing to update that configuration file. 
-So I decided to redo my repository management again. 
+So I decided to redo my repository management. 
 
 I looked around and there were other tools at the time - however these usually had some downsides:
 
 1. They were limited to one repository provider. 
-For example, the [GitHub CLI](http://cli.github.com) only worked with GitHub repositories. 
-At the same time, the [GitLab CLI](https://docs.gitlab.com/editor_extensions/gitlab_cli/) only worked with GitLab repositories. 
+For example [GitHub CLI](http://cli.github.com) only worked with GitHub repositories. 
+At the same time [GitLab CLI](https://docs.gitlab.com/editor_extensions/gitlab_cli/) only worked with GitLab repositories. 
 
 2. Tools typically encouraged a flat directory structure. 
 For example, they cloned repositories directly under a `Projects` folder.
@@ -73,12 +73,12 @@ Two repositories that had little to do with each other might end up on disk dire
 
 3. Some tools were only available from within an IDE or GUI.
 
-All of these made felt like annoying downsides.  
+All of these were annoyances -- but overall meant existing tools could not do what I wanted.  
 As I was starting out with [go](https://go.dev) at the time, I decided to use the opportunity to learn the language properly and start writing my own tool. 
 I couldn't think of a good name, I eventually settled on `ggman` - with "man" standing for "manager" and the gs standing for "git" and "go". 
 
 In order to best fit my own workflow, and to prevent me having to rewrite the tool again on the future, I decided on several goals for `ggman`. 
-As I have been using `ggman` ever since I designed it without the need for a major rewrite[^1], I consider it successful. 
+As I have been using `ggman` without any major rewrites[^1] ever since, I consider ggman and these goals successful. 
 
 In particular, I decided `ggman` should:
 
@@ -149,7 +149,8 @@ It achieves this using several steps:
     ggman
     ```
 
-    Components are the key abstraction that allow ggman to remain provider independent - as they work with (almost) any repository host. 
+    This means the same underlying operation happens, regardless if the `https` or `ssh` URL is passed to `ggman clone`.
+    This component abstraction is not specific to GitHub - it allows ggman to remain provider independent and works with  (almost) any repository host[^2]. 
 
 2.
     Assign the repository a local path using these components, and create parent folders as needed. 
@@ -176,16 +177,16 @@ It achieves this using several steps:
 
 ## Finding and performing actions on repositories
 
-But `ggman` can not add clone new repositories. 
+But `ggman` can not only clone new repositories. 
 It can also perform actions across existing repositories.
 Actions in principle take the form ```ggman [FILTERS] ACTION```. 
 
 The supported actions are things which effectively map to plain git commands, such as:
 
-- `ggman ls`, which prints a list of local repositories;
 - `ggman pull`, which pulls changes from remotes into the local repositories;
-- `ggman push`, which pushes changes to remotes remote repositories.
-- `ggman exec COMMAND` which directly invokes an external command.
+- `ggman push`, which pushes changes to remotes remote repositories;
+- `ggman exec COMMAND` which directly invokes an external command; or
+- `ggman ls`, which prints a list of local repositories.
 
 By default, any action will act on all repositories existing in some sub-directory of `$GGROOT`. 
 For example:
@@ -197,6 +198,8 @@ $ ggman ls
 /Users/whoever/Projects/github.com/tkw1536/tkw01536.de
 /Users/whoever/Projects/gitlab.com/lorem/ipsum
 ```
+
+This lists all locally cloned repositories. 
 
 It is also possible to only act on a subset of repositories using a "FILTER" argument.
 The simplest one is the `--for` filter, which fuzzy matches against repositories.
@@ -211,6 +214,8 @@ $ ggman --for github.com ls
 ```
 
 This command lists only repositories that match "github.com" in their URL. 
+It no longer shows the `gitlab.com` repository from above.
+
 As the matching is fuzzy, it also allows to omit characters or components. 
 For example:
 
@@ -230,11 +235,11 @@ For convenience ggman provides two shell aliases that make use of the `--for` fi
     This makes it extremely simple to find a project belonging to a repository and working on it. 
 
 -
-    `ggcode PATTERN`, which is like `ggcd` except that it open a [Visual Studio Code](https://code.visualstudio.com/) instance in the desired directory. 
-    This makes it extremely quick to start coding on a specific project, without having to navigate through various user interfaces. 
+    `ggcode PATTERN`, which is like `ggcd` except that it opens a [Visual Studio Code](https://code.visualstudio.com/) instance in the desired directory. 
+    This makes it extremely quick to start coding on a specific repository, without having to navigate through various user interfaces. 
 
-Another filter is the special `--here` filter which only matches the repository in the current directory (even if not under `$GGROOT`). 
-There are also other filters, but they are not important here.  
+Another filter worth mentioning is the special `--here` filter which only matches the repository in the current directory (even if not under `$GGROOT`). 
+There are also other filters, see the README for a complete list. 
 
 ## Other ggman functionality
 
@@ -257,7 +262,7 @@ If you are interested I encourage you to have a look at the [README](https://git
 
 ## Conclusion
 
-And that is already all I want to say for now, thank you for reading what basically amounts to a wall of text. 
+And that is already all I want to say for now, thank you for reading 😀. 
 
 In summary: I work with lots of git repositories.
 I wrote a tool called `ggman` to maintain and expand a local directory structure of all of these. 
@@ -266,3 +271,5 @@ It can locate where specific repositories are cloned to, and run operations such
 Feel free to try it out and give me feedback at https://github.com/tkw1536/ggman. 
 
 [^1]: Unless you count me changing several implementation details under the hood, but I do not.   
+[^2]: The concept of components works great with only one exception: URLs with custom ports like `git@my.domain.com:2222/hello/world.git`. 
+      The workaround I've used so far is to skip canonicalization for those, or to setup a config file specific to the host.
