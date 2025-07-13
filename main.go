@@ -63,7 +63,7 @@ var g = generator.Generator{
 			"2025/07/08/go-empty-struct":      "/go-empty-struct/",
 
 			// published drafts
-			"drafts/ggman": "/ggman",
+			"drafts/ggman": "/ggman/",
 		}),
 	},
 
