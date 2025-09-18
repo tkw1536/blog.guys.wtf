@@ -1,5 +1,7 @@
+//spellchecker:words generator
 package generator
 
+//spellchecker:words context errors slog
 import (
 	"context"
 	"errors"
@@ -11,7 +13,12 @@ import (
 
 // Scanner is a function that scans for inputs.
 // See [NewMarkdownScanner] and [NewStaticScanner].
-type Scanner func(ctx context.Context, logger *slog.Logger, files chan<- ScannedFile) error
+type Scanner struct {
+	scan  scannerFunc
+	paths []string
+}
+
+type scannerFunc = func(ctx context.Context, logger *slog.Logger, files chan<- ScannedFile) error
 
 // ScannedFile is a file returned by a scanner.
 type ScannedFile struct {
@@ -24,7 +31,7 @@ type ScannedFile struct {
 // errExcluded is used by [newFSScanner] to indicate that a file is to be skipped.
 var errExcluded = errors.New("file excluded")
 
-func newFSScanner(open func() (fs.FS, error), process func(path string, d fs.DirEntry, contents []byte) (ScannedFile, error)) Scanner {
+func newFSScanner(open func() (fs.FS, error), process func(path string, d fs.DirEntry, contents []byte) (ScannedFile, error)) scannerFunc {
 	return func(ctx context.Context, logger *slog.Logger, files chan<- ScannedFile) error {
 		fsys, err := open()
 		if err != nil {

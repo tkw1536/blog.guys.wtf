@@ -1,5 +1,7 @@
+//spellchecker:words generator
 package generator
 
+//spellchecker:words bytes context slog path filepath regexp strings github tdewolff minify html json
 import (
 	"bytes"
 	"context"

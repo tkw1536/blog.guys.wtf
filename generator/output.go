@@ -1,5 +1,7 @@
+//spellchecker:words generator
 package generator
 
+//spellchecker:words context errors html template slog path filepath slices strings sync atomic
 import (
 	"context"
 	"errors"
@@ -50,18 +52,20 @@ func (file File) Link() string {
 
 // FileWriter is a function that writes a file to output.
 // Use [NewNativeFileWriter] for a default function.
-type FileWriter func(ctx context.Context, logger *slog.Logger, file File) error
+type FileWriter interface {
+	Reset() error
+	Write(ctx context.Context, logger *slog.Logger, file File) error
+}
 
 // NewNativeFileWriter creates a new [FileWriter] that writes to the given root as its' output directory.
 //
 // Files outside the given directory are not tracked.
 // If cleanFirst is set to true, it cleans all files when first invoked.
 func NewNativeFileWriter(path string, cleanFirst bool) FileWriter {
-	writer := &nativeFileWriter{
+	return &nativeFileWriter{
 		path:       path,
 		cleanFirst: cleanFirst,
 	}
-	return writer.Write
 }
 
 type nativeFileWriter struct {
@@ -99,6 +103,10 @@ func (nfw *nativeFileWriter) openRootSlow(logger *slog.Logger) (*os.Root, error)
 	nfw.root = root
 	nfw.loaded.Store(true)
 	return nfw.root, nil
+}
+
+func (nfw *nativeFileWriter) Reset() error {
+	return nil
 }
 
 func (nfw *nativeFileWriter) Write(ctx context.Context, logger *slog.Logger, file File) (e error) {

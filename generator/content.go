@@ -1,5 +1,7 @@
+//spellchecker:words generator
 package generator
 
+//spellchecker:words bytes context html template slog
 import (
 	"bytes"
 	"context"

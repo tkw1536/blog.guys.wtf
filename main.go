@@ -1,5 +1,7 @@
+//spellchecker:words main
 package main
 
+//spellchecker:words context generator html template slog http signal strings time embed github alecthomas chroma formatters chromahtml yuin goldmark highlighting extension
 import (
 	"cmp"
 	"context"
@@ -35,7 +37,7 @@ var listHTML string
 var listTemplate = mustTemplate(listHTML, "list.html")
 
 var g = generator.Generator{
-	Inputs: []generator.Scanner{
+	Inputs: []*generator.Scanner{
 		generator.NewStaticScanner("static", []string{"_", "."}),
 		generator.NewMarkdownScanner(
 			"content",
@@ -110,19 +112,19 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 
 	// running with DEBUG=1 starts a server
-	if os.Getenv("DEBUG") != "" {
+	if os.Getenv("WATCH") != "" {
 		var server http.Server
 		server.Addr = "localhost:8080"
 
-		g.Output, server.Handler = generator.NewDebugServer()
+		g.Output, server.Handler = generator.NewServer()
 
 		done := make(chan error, 1)
 		go func() {
-			logger.Info("debug server listening", "addr", server.Addr)
+			logger.Info("server listening", "addr", server.Addr)
 			done <- server.ListenAndServe()
 		}()
 
-		if err := g.Run(ctx, logger); err != nil {
+		if err := g.Watch(ctx, logger); err != nil {
 			exitCode = 1
 		}
 
@@ -136,7 +138,7 @@ func main() {
 		}()
 
 		err := <-done
-		logger.Info("debug server closed", "err", err)
+		logger.Info("server closed", "err", err)
 
 		return
 	}

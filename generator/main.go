@@ -1,5 +1,7 @@
+//spellchecker:words generator
 package generator
 
+//spellchecker:words context errors slog runtime sync time
 import (
 	"context"
 	"errors"
@@ -7,12 +9,13 @@ import (
 	"log/slog"
 	"runtime"
 	"sync"
+	"time"
 )
 
 // Generator is a dead simple static file generator.
 type Generator struct {
 	// Inputs are inputs to the generator.
-	Inputs []Scanner
+	Inputs []*Scanner
 
 	// Indexes are special templates which are passed all previously generated files.
 	Indexes []IndexTemplate
@@ -29,6 +32,41 @@ type Generator struct {
 }
 
 var errRecursiveIndex = errors.New("indexer produced file to be indexed: not allowed")
+
+// debounce debounces the given channel under the given duration.
+// A struct received on c is only passed through to the output channel if no other signal arrives within the given window.
+func debounce[T any](c <-chan T, window time.Duration, returnLast bool) <-chan T {
+	if c == nil {
+		return nil
+	}
+	d := make(chan T)
+	go func() {
+		defer close(d)
+
+		timer := time.NewTimer(window)
+		timer.Stop()
+
+		for v := range c {
+		inner:
+			for {
+				timer.Reset(window)
+				select {
+				case last := <-c:
+					if returnLast {
+						v = last
+					}
+				case <-timer.C:
+					d <- v
+					break inner
+				}
+			}
+
+		}
+	}()
+
+	return d
+
+}
 
 // Run runs the static site generator with the given context, logging to the given logger.
 //
@@ -82,7 +120,7 @@ func (generator *Generator) Run(ctx context.Context, logger *slog.Logger) error 
 		go func() {
 			defer inputProducers.Done()
 
-			if err := scanner(ourContext, logger, inputs); err != nil {
+			if err := scanner.scan(ourContext, logger, inputs); err != nil {
 				registerError(fmt.Errorf("scanner %d failed to scan: %w", i, err))
 			}
 		}()
@@ -135,10 +173,16 @@ func (generator *Generator) Run(ctx context.Context, logger *slog.Logger) error 
 		}
 	}()
 
+	// clear the output
+	if err := generator.Output.Reset(); err != nil {
+		logger.Error("resetting output failed", slog.Any("error", err))
+		return err
+	}
+
 	// renderContent -> postProcess -> output
 	pipe(ourContext, logger, posts, contents, &postProducers, registerError, generator.renderContent)
 	pipe(ourContext, logger, outputs, posts, &outputProducers, registerError, generator.postProcess)
-	drain(ourContext, logger, outputs, &fileWriters, registerError, generator.Output)
+	drain(ourContext, logger, outputs, &fileWriters, registerError, generator.Output.Write)
 
 	// close all the components once done
 	go func() {

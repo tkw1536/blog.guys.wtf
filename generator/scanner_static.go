@@ -1,5 +1,7 @@
+//spellchecker:words generator
 package generator
 
+//spellchecker:words strings
 import (
 	"io/fs"
 	"strings"
@@ -10,30 +12,33 @@ import (
 //
 // If files start with any of prefixes, it is ignored.
 // Scanner internally uses [os.Root], and ensures that no files outside the given directory are caught.
-func NewStaticScanner(path string, prefixes []string) Scanner {
-	return newFSScanner(
-		openRootFS(path),
-		func(path string, d fs.DirEntry, contents []byte) (ScannedFile, error) {
-			// check if the file is excluded
-			name := d.Name()
-			for _, exclude := range prefixes {
-				if strings.HasPrefix(name, exclude) {
-					return ScannedFile{}, errExcluded
+func NewStaticScanner(path string, prefixes []string) *Scanner {
+	return &Scanner{
+		scan: newFSScanner(
+			openRootFS(path),
+			func(path string, d fs.DirEntry, contents []byte) (ScannedFile, error) {
+				// check if the file is excluded
+				name := d.Name()
+				for _, exclude := range prefixes {
+					if strings.HasPrefix(name, exclude) {
+						return ScannedFile{}, errExcluded
+					}
 				}
-			}
 
-			// then copy it as-is
-			return ScannedFile{
-				FileWithMetadata: FileWithMetadata{
-					File: File{
-						Path:     path,
-						Contents: contents,
+				// then copy it as-is
+				return ScannedFile{
+					FileWithMetadata: FileWithMetadata{
+						File: File{
+							Path:     path,
+							Contents: contents,
+						},
+						Metadata: nil,
 					},
-					Metadata: nil,
-				},
-				Indexed: false,
-				Raw:     true,
-			}, nil
-		},
-	)
+					Indexed: false,
+					Raw:     true,
+				}, nil
+			},
+		),
+		paths: []string{path},
+	}
 }
