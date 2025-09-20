@@ -20,7 +20,7 @@ import (
 // files are added to the index if the index function returns true, or shouldIndex is nil.
 //
 // Internally uses [os.Root], and ensures that no files outside the given directory are caught.
-func NewMarkdownScanner(path string, shouldIndex func(path string, Metadata map[string]any) bool, options ...goldmark.Option) *Scanner {
+func NewMarkdownScanner(path string, shouldIndex func(path string, Metadata map[string]any) bool, options ...goldmark.Option) Scanner {
 	markdown := goldmark.New(
 		append([]goldmark.Option{
 			goldmark.WithExtensions(
@@ -28,61 +28,59 @@ func NewMarkdownScanner(path string, shouldIndex func(path string, Metadata map[
 			),
 		}, options...)...,
 	)
-	return &Scanner{
-		scan: newFSScanner(
-			openRootFS(path),
-			func(path string, d fs.DirEntry, contents []byte) (ScannedFile, error) {
-				// check if the file is excluded
-				name := d.Name()
-				if !strings.HasSuffix(name, ".md") {
-					return ScannedFile{}, errExcluded
-				}
+	return &fsScanner{
+		open: openRootFS(path),
+		process: func(path string, d fs.DirEntry, contents []byte) (ScannedFile, error) {
+			// check if the file is excluded
+			name := d.Name()
+			if !strings.HasSuffix(name, ".md") {
+				return ScannedFile{}, errExcluded
+			}
 
-				context := parser.NewContext()
+			context := parser.NewContext()
 
-				// parse markdown
-				var markdownResult bytes.Buffer
-				if err := markdown.Convert(contents, &markdownResult, parser.WithContext(context)); err != nil {
-					return ScannedFile{}, fmt.Errorf("failed to convert markdown: %w", err)
-				}
+			// parse markdown
+			var markdownResult bytes.Buffer
+			if err := markdown.Convert(contents, &markdownResult, parser.WithContext(context)); err != nil {
+				return ScannedFile{}, fmt.Errorf("failed to convert markdown: %w", err)
+			}
 
-				// addRel to external links
-				var contentBuffer bytes.Buffer
-				if err := addTargetAndRel(&contentBuffer, &markdownResult); err != nil {
-					return ScannedFile{}, fmt.Errorf("failed to make links open in new tab: %w", err)
-				}
+			// addRel to external links
+			var contentBuffer bytes.Buffer
+			if err := addTargetAndRel(&contentBuffer, &markdownResult); err != nil {
+				return ScannedFile{}, fmt.Errorf("failed to make links open in new tab: %w", err)
+			}
 
-				// check if we should index!
-				metadata := meta.Get(context)
-				doIndex := true
-				if shouldIndex != nil {
-					doIndex = shouldIndex(path, metadata)
-				}
+			// check if we should index!
+			metadata := meta.Get(context)
+			doIndex := true
+			if shouldIndex != nil {
+				doIndex = shouldIndex(path, metadata)
+			}
 
-				// by default, make the destination file '[slug]/index.html'
-				filename := filepath.Join(path[:len(path)-len(".md")], "index.html")
+			// by default, make the destination file '[slug]/index.html'
+			filename := filepath.Join(path[:len(path)-len(".md")], "index.html")
 
-				// if we have _[something].md directly output that as [something].html
-				if name := d.Name(); strings.HasPrefix(name, "_") {
-					nameWithHTML := name[:len(name)-len(".md")] + ".html"
-					nameWithHTML = nameWithHTML[1:]
-					filename = filepath.Join(filepath.Dir(path), nameWithHTML)
-				}
+			// if we have _[something].md directly output that as [something].html
+			if name := d.Name(); strings.HasPrefix(name, "_") {
+				nameWithHTML := name[:len(name)-len(".md")] + ".html"
+				nameWithHTML = nameWithHTML[1:]
+				filename = filepath.Join(filepath.Dir(path), nameWithHTML)
+			}
 
-				// and then use
-				return ScannedFile{
-					FileWithMetadata: FileWithMetadata{
-						File: File{
-							Path:     filename,
-							Contents: contentBuffer.Bytes(),
-						},
-						Metadata: metadata,
+			// and then use
+			return ScannedFile{
+				FileWithMetadata: FileWithMetadata{
+					File: File{
+						Path:     filename,
+						Contents: contentBuffer.Bytes(),
 					},
-					Indexed: doIndex,
-					Raw:     false,
-				}, nil
-			},
-		),
+					Metadata: metadata,
+				},
+				Indexed: doIndex,
+				Raw:     false,
+			}, nil
+		},
 		paths: []string{path},
 	}
 }

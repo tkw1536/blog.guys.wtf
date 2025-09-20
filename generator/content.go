@@ -11,12 +11,6 @@ import (
 	"log/slog"
 )
 
-// FileWithMetadata is a file with associated metadata.
-type FileWithMetadata struct {
-	File
-	Metadata map[string]any // Metadata contained in the file, if any.
-}
-
 // IndexTemplate is a template to be used for generation.
 type ContentTemplate struct {
 	Template *template.Template // Template used for actual rendering, is passed [ContentTemplateContext].

@@ -6,49 +6,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"html/template"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 	"sync"
 	"sync/atomic"
 )
-
-// File describes a single file to be created in the output.
-type File struct {
-	// Path is the relative path from the root of the output directory to this file.
-	//
-	// Paths may start with ".." indicating behavior outside the root output directory.
-	// Consumers of a File should implement appropriate protections if not needed.
-	Path string
-
-	// Contents holds the contents of the file.
-	Contents []byte
-}
-
-// Body returns the contents of this file as unsafe html.
-// Intended to be used in templates.
-func (cf *File) Body() template.HTML {
-	return template.HTML(cf.Contents)
-}
-
-// Link returns a nice link to this file.
-// Links always start with "/", and only end in slash in case of a directory.
-func (file File) Link() string {
-	if file.Path == "index.html" {
-		return "/"
-	}
-
-	cleanPath := strings.Trim(file.Path, "/")
-
-	if strings.HasSuffix(cleanPath, "/index.html") {
-		cleanPath = cleanPath[:len(cleanPath)-len("index.html")]
-	}
-
-	return "/" + cleanPath
-}
 
 // FileWriter is a function that writes a file to output.
 // Use [NewNativeFileWriter] for a default function.

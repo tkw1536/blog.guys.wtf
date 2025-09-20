@@ -37,7 +37,7 @@ var listHTML string
 var listTemplate = mustTemplate(listHTML, "list.html")
 
 var g = generator.Generator{
-	Inputs: []*generator.Scanner{
+	Inputs: []generator.Scanner{
 		generator.NewStaticScanner("static", []string{"_", "."}),
 		generator.NewMarkdownScanner(
 			"content",

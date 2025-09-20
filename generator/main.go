@@ -15,7 +15,7 @@ import (
 // Generator is a dead simple static file generator.
 type Generator struct {
 	// Inputs are inputs to the generator.
-	Inputs []*Scanner
+	Inputs []Scanner
 
 	// Indexes are special templates which are passed all previously generated files.
 	Indexes []IndexTemplate
@@ -120,7 +120,7 @@ func (generator *Generator) Run(ctx context.Context, logger *slog.Logger) error 
 		go func() {
 			defer inputProducers.Done()
 
-			if err := scanner.scan(ourContext, logger, inputs); err != nil {
+			if err := scanner.Scan(ourContext, logger, inputs); err != nil {
 				registerError(fmt.Errorf("scanner %d failed to scan: %w", i, err))
 			}
 		}()

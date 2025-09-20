@@ -14,34 +14,38 @@ import (
 var redirectTemplate = template.Must(template.New("").Parse(`<!DOCTYPE html><title>{{ . }}</title><meta http-equiv="refresh" content = "0;url={{.}}" />`))
 
 // NewRedirectScanner adds static html files that redirect from source to target
-func NewRedirectScanner(sourceToTarget map[string]string) *Scanner {
-	return &Scanner{
-		scan: func(ctx context.Context, logger *slog.Logger, files chan<- ScannedFile) error {
+func NewRedirectScanner(sourceToTarget map[string]string) Scanner {
+	return redirectScanner(sourceToTarget)
+}
 
-			for source, target := range sourceToTarget {
-				var buffer bytes.Buffer
-				if err := redirectTemplate.Execute(&buffer, target); err != nil {
-					return fmt.Errorf("failed to execute template: %w", err)
-				}
+type redirectScanner map[string]string
 
-				path := strings.Trim(source, "/") + "/index.html"
+func (scanner redirectScanner) Scan(ctx context.Context, logger *slog.Logger, files chan<- ScannedFile) error {
+	for source, target := range scanner {
+		var buffer bytes.Buffer
+		if err := redirectTemplate.Execute(&buffer, target); err != nil {
+			return fmt.Errorf("failed to execute template: %w", err)
+		}
 
-				file := ScannedFile{
-					FileWithMetadata: FileWithMetadata{
-						File: File{Path: path, Contents: buffer.Bytes()},
-					},
-					Raw: true,
-				}
+		path := strings.Trim(source, "/") + "/index.html"
 
-				select {
-				case files <- file:
-				case <-ctx.Done():
-					return ctx.Err()
-				}
-			}
+		file := ScannedFile{
+			FileWithMetadata: FileWithMetadata{
+				File: File{Path: path, Contents: buffer.Bytes()},
+			},
+			Raw: true,
+		}
 
-			return nil
-		},
-		paths: nil,
+		select {
+		case files <- file:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 	}
+
+	return nil
+}
+
+func (scanner redirectScanner) Paths() []string {
+	return nil
 }

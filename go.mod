@@ -11,6 +11,7 @@ require (
 	github.com/yuin/goldmark-meta v1.1.0
 	go.tkw01536.de/pkglib v0.0.0-20250918085227-d6b24564cb37
 	golang.org/x/net v0.41.0
+	gopkg.in/fsnotify.v1 v1.4.7
 )
 
 require (
@@ -18,6 +19,5 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/tdewolff/parse/v2 v2.8.3 // indirect
 	golang.org/x/sys v0.36.0 // indirect
-	gopkg.in/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

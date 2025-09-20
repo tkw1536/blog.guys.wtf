@@ -10,6 +10,7 @@ import (
 
 	"github.com/farmergreg/rfsnotify"
 	"go.tkw01536.de/pkglib/errorsx"
+	"gopkg.in/fsnotify.v1"
 )
 
 // Watch is like calling [Run] every time a signal is received on the given channel.
@@ -22,7 +23,7 @@ func (generator *Generator) Watch(ctx context.Context, logger *slog.Logger) erro
 		logger = slog.New(slog.DiscardHandler)
 	}
 
-	watch, closer, err := watchScanners(ctx, logger, generator.Inputs)
+	watch, closer, err := generator.newNotifier(ctx, logger)
 	if err != nil {
 		return fmt.Errorf("failed to watch: %w", err)
 	}
@@ -57,13 +58,13 @@ func (generator *Generator) Watch(ctx context.Context, logger *slog.Logger) erro
 // The first contains a channel that is sent a signal whenever any directory changes.
 // The seconds is a function to stop watching and close the channel.
 // The third returns an error if watching failed.
-func watchScanners(ctx context.Context, logger *slog.Logger, scanners []*Scanner) (<-chan struct{}, func() error, error) {
+func (generator *Generator) newNotifier(ctx context.Context, logger *slog.Logger) (<-chan fsnotify.Event, func() error, error) {
 	watcher, err := rfsnotify.NewWatcher()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to watch directories: %w", err)
 	}
 
-	c := make(chan struct{}, len(scanners))
+	c := make(chan fsnotify.Event, 1)
 	go func() {
 		defer close(c)
 
@@ -76,7 +77,7 @@ func watchScanners(ctx context.Context, logger *slog.Logger, scanners []*Scanner
 					return
 				}
 				logger.Info("watcher triggered", slog.String("event", e.String()))
-				c <- struct{}{}
+				c <- e
 			case e, ok := <-watcher.Errors:
 				logger.Error("watcher saw error", slog.Any("error", e))
 				if !ok {
@@ -86,8 +87,8 @@ func watchScanners(ctx context.Context, logger *slog.Logger, scanners []*Scanner
 		}
 	}()
 
-	for _, scanner := range scanners {
-		for _, dir := range scanner.paths {
+	for _, scanner := range generator.Inputs {
+		for _, dir := range scanner.Paths() {
 			if err := watcher.AddRecursive(dir); err != nil {
 				err := fmt.Errorf("failed to watch %q: %w", dir, err)
 				return nil, nil, errorsx.Combine(err, watcher.Close())

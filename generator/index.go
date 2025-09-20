@@ -42,7 +42,7 @@ type IndexTemplateContext struct {
 	Template *IndexTemplate
 }
 
-// IndexEntry is an indexed blog page.
+// IndexEntry represents a single indexed page.
 type IndexEntry struct {
 	Path     string         // Path the file will be outputted in
 	Metadata map[string]any // Metadata contained in the file, if any
@@ -54,6 +54,7 @@ func (index IndexEntry) Link() string {
 }
 
 // An IndexComparisonFunc is passed to [slices.SortFunc] to compare to indexes.
+// It is invoked in order to establish a total order on index entries.
 type IndexComparisonFunc func(left, right IndexEntry) int
 
 // f returns the function used to sort
