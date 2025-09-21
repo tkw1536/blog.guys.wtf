@@ -6,6 +6,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
+	"go.tkw01536.de/blog/generator/file"
+	"go.tkw01536.de/blog/generator/output"
+	"go.tkw01536.de/blog/generator/scanner"
+
 	"log/slog"
 	"runtime"
 	"sync"
@@ -15,7 +20,7 @@ import (
 // Generator is a dead simple static file generator.
 type Generator struct {
 	// Inputs are inputs to the generator.
-	Inputs []Scanner
+	Inputs []scanner.Scanner
 
 	// Indexes are special templates which are passed all previously generated files.
 	Indexes []IndexTemplate
@@ -28,7 +33,7 @@ type Generator struct {
 	PostProcessors []PostProcessor
 
 	// Output is used to write output files.
-	Output FileWriter
+	Output output.Output
 }
 
 var errRecursiveIndex = errors.New("indexer produced file to be indexed: not allowed")
@@ -96,20 +101,20 @@ func (generator *Generator) Run(ctx context.Context, logger *slog.Logger) error 
 	var bufferSize = runtime.NumCPU()
 
 	var (
-		inputs         = make(chan ScannedFile, bufferSize) // inputs from the inputs
-		inputProducers sync.WaitGroup                       // waits for anything writing to inputs
+		inputs         = make(chan file.ScannedFile, bufferSize) // inputs from the inputs
+		inputProducers sync.WaitGroup                            // waits for anything writing to inputs
 
-		contents         = make(chan FileWithMetadata, bufferSize) // non-raw files to be wrapped in ContentTemplate
-		contentProducers sync.WaitGroup                            // waits for anything writing to the contents
+		contents         = make(chan file.FileWithMetadata, bufferSize) // non-raw files to be wrapped in ContentTemplate
+		contentProducers sync.WaitGroup                                 // waits for anything writing to the contents
 
-		index          = make(chan ScannedFile, bufferSize)
+		index          = make(chan file.ScannedFile, bufferSize)
 		indexProducers sync.WaitGroup // anything producing an index entry
 
-		posts         = make(chan File, bufferSize) // outputs to be post-processed
-		postProducers sync.WaitGroup                // waits for anything producing post-processing output
+		posts         = make(chan file.File, bufferSize) // outputs to be post-processed
+		postProducers sync.WaitGroup                     // waits for anything producing post-processing output
 
-		outputs         = make(chan File, bufferSize) // final outputs
-		outputProducers sync.WaitGroup                // anything producing final output
+		outputs         = make(chan file.File, bufferSize) // final outputs
+		outputProducers sync.WaitGroup                     // anything producing final output
 
 		fileWriters sync.WaitGroup
 	)
@@ -180,7 +185,7 @@ func (generator *Generator) Run(ctx context.Context, logger *slog.Logger) error 
 	}
 
 	// renderContent -> postProcess -> output
-	pipe(ourContext, logger, posts, contents, &postProducers, registerError, generator.renderContent)
+	pipe(ourContext, logger, posts, contents, &postProducers, registerError, generator.renderFile)
 	pipe(ourContext, logger, outputs, posts, &outputProducers, registerError, generator.postProcess)
 	drain(ourContext, logger, outputs, &fileWriters, registerError, generator.Output.Write)
 

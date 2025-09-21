@@ -1,4 +1,5 @@
-package generator
+// Package file provides file abstractions.
+package file
 
 import (
 	"html/template"

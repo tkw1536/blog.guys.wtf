@@ -1,5 +1,5 @@
 //spellchecker:words generator
-package generator
+package output
 
 //spellchecker:words context slog http sync testing fstest
 import (
@@ -8,11 +8,13 @@ import (
 	"net/http"
 	"sync"
 	"testing/fstest"
+
+	"go.tkw01536.de/blog/generator/file"
 )
 
-// NewServer returns a pair of FileWriter and http.Handler.
-// FileWriter can be used as the output of a generator, while the handler serves the generated files.
-func NewServer() (FileWriter, http.Handler) {
+// Server returns a pair of [Output] and [http.Writer].
+// The output is intended to be used as the output of a generation, while the handler serves the generated files.
+func Server() (Output, http.Handler) {
 	dw := &serverWriter{fs: make(fstest.MapFS)}
 	return dw, dw.Handler()
 }
@@ -30,7 +32,7 @@ func (sw *serverWriter) Reset() error {
 	return nil
 }
 
-func (sw *serverWriter) Write(ctx context.Context, logger *slog.Logger, file File) error {
+func (sw *serverWriter) Write(ctx context.Context, logger *slog.Logger, file file.File) error {
 	sw.l.Lock()
 	defer sw.l.Unlock()
 

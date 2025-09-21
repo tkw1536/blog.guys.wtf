@@ -1,5 +1,5 @@
 //spellchecker:words generator
-package generator
+package scanner
 
 //spellchecker:words bytes path filepath strings github yuin goldmark meta parser golang html
 import (
@@ -10,17 +10,19 @@ import (
 	"path/filepath"
 	"strings"
 
+	"go.tkw01536.de/blog/generator/file"
+
 	"github.com/yuin/goldmark"
 	meta "github.com/yuin/goldmark-meta"
 	"github.com/yuin/goldmark/parser"
 	"golang.org/x/net/html"
 )
 
-// NewMarkdownScanner adds a scanner that renders file with the "md" extension at path as markdown.
+// Markdown adds a scanner that renders file with the "md" extension at path as markdown.
 // files are added to the index if the index function returns true, or shouldIndex is nil.
 //
 // Internally uses [os.Root], and ensures that no files outside the given directory are caught.
-func NewMarkdownScanner(path string, shouldIndex func(path string, Metadata map[string]any) bool, options ...goldmark.Option) Scanner {
+func Markdown(path string, shouldIndex func(path string, Metadata map[string]any) bool, options ...goldmark.Option) Scanner {
 	markdown := goldmark.New(
 		append([]goldmark.Option{
 			goldmark.WithExtensions(
@@ -30,11 +32,11 @@ func NewMarkdownScanner(path string, shouldIndex func(path string, Metadata map[
 	)
 	return &fsScanner{
 		open: openRootFS(path),
-		process: func(path string, d fs.DirEntry, contents []byte) (ScannedFile, error) {
+		process: func(path string, d fs.DirEntry, contents []byte) (file.ScannedFile, error) {
 			// check if the file is excluded
 			name := d.Name()
 			if !strings.HasSuffix(name, ".md") {
-				return ScannedFile{}, errExcluded
+				return file.ScannedFile{}, ErrExcluded
 			}
 
 			context := parser.NewContext()
@@ -42,13 +44,13 @@ func NewMarkdownScanner(path string, shouldIndex func(path string, Metadata map[
 			// parse markdown
 			var markdownResult bytes.Buffer
 			if err := markdown.Convert(contents, &markdownResult, parser.WithContext(context)); err != nil {
-				return ScannedFile{}, fmt.Errorf("failed to convert markdown: %w", err)
+				return file.ScannedFile{}, fmt.Errorf("failed to convert markdown: %w", err)
 			}
 
 			// addRel to external links
 			var contentBuffer bytes.Buffer
 			if err := addTargetAndRel(&contentBuffer, &markdownResult); err != nil {
-				return ScannedFile{}, fmt.Errorf("failed to make links open in new tab: %w", err)
+				return file.ScannedFile{}, fmt.Errorf("failed to make links open in new tab: %w", err)
 			}
 
 			// check if we should index!
@@ -69,9 +71,9 @@ func NewMarkdownScanner(path string, shouldIndex func(path string, Metadata map[
 			}
 
 			// and then use
-			return ScannedFile{
-				FileWithMetadata: FileWithMetadata{
-					File: File{
+			return file.ScannedFile{
+				FileWithMetadata: file.FileWithMetadata{
+					File: file.File{
 						Path:     filename,
 						Contents: contentBuffer.Bytes(),
 					},

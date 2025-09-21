@@ -1,4 +1,4 @@
-module generator
+module go.tkw01536.de/blog 
 
 go 1.25.1
 

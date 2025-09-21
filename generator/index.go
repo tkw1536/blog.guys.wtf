@@ -11,6 +11,8 @@ import (
 	"log/slog"
 	"slices"
 	"strings"
+
+	"go.tkw01536.de/blog/generator/file"
 )
 
 // IndexTemplate is an index file to be generated.
@@ -50,7 +52,7 @@ type IndexEntry struct {
 
 // Link returns a nice link to this page.
 func (index IndexEntry) Link() string {
-	return File{Path: index.Path}.Link()
+	return file.File{Path: index.Path}.Link()
 }
 
 // An IndexComparisonFunc is passed to [slices.SortFunc] to compare to indexes.
@@ -73,7 +75,7 @@ func (generator *Generator) renderIndexes(
 	logger *slog.Logger,
 
 	entries []IndexEntry,
-	output chan<- ScannedFile,
+	output chan<- file.ScannedFile,
 ) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -90,9 +92,9 @@ func (generator *Generator) renderIndexes(
 			return fmt.Errorf("failed to render index contents %q: %w", tpl.Path, err)
 		}
 
-		output <- ScannedFile{
-			FileWithMetadata: FileWithMetadata{
-				File: File{
+		output <- file.ScannedFile{
+			FileWithMetadata: file.FileWithMetadata{
+				File: file.File{
 					Path:     tpl.Path,
 					Contents: out.Bytes(),
 				},

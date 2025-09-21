@@ -11,6 +11,8 @@ import (
 	"regexp"
 	"strings"
 
+	"go.tkw01536.de/blog/generator/file"
+
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/css"
 	"github.com/tdewolff/minify/v2/html"
@@ -21,23 +23,23 @@ import (
 )
 
 // PostProcessor post processes a file before outputting
-type PostProcessor func(in File) (out File, err error)
+type PostProcessor func(in file.File) (out file.File, err error)
 
 func (generator *Generator) postProcess(
 	ctx context.Context,
 	logger *slog.Logger,
-	file File,
-) (File, error) {
-	logger.Info("post processing file", slog.String("path", file.Path))
+	f file.File,
+) (file.File, error) {
+	logger.Info("post processing file", slog.String("path", f.Path))
 	for _, processor := range generator.PostProcessors {
 		var err error
-		file, err = processor(file)
+		f, err = processor(f)
 		if err != nil {
-			return File{}, fmt.Errorf("failed to post process: %w", err)
+			return file.File{}, fmt.Errorf("failed to post process: %w", err)
 		}
 	}
 
-	return file, nil
+	return f, nil
 }
 
 var m *minify.M
@@ -52,7 +54,7 @@ func init() {
 	m.AddFuncRegexp(regexp.MustCompile("[/+]xml$"), xml.Minify)
 }
 
-func MinifyPostProcessor(in File) (out File, err error) {
+func MinifyPostProcessor(in file.File) (out file.File, err error) {
 	ext := strings.ToLower(filepath.Ext(in.Path))
 
 	var mediaType string
@@ -75,9 +77,9 @@ func MinifyPostProcessor(in File) (out File, err error) {
 
 	var buffer bytes.Buffer
 	if err := m.Minify(mediaType, &buffer, bytes.NewReader(in.Contents)); err != nil {
-		return File{}, fmt.Errorf("failed to minify %q: %w", in.Path, err)
+		return file.File{}, fmt.Errorf("failed to minify %q: %w", in.Path, err)
 	}
-	return File{
+	return file.File{
 		Path:     in.Path,
 		Contents: buffer.Bytes(),
 	}, nil

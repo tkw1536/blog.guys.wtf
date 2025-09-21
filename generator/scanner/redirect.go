@@ -1,5 +1,5 @@
 //spellchecker:words generator
-package generator
+package scanner
 
 //spellchecker:words bytes context html template slog strings
 import (
@@ -9,18 +9,20 @@ import (
 	"html/template"
 	"log/slog"
 	"strings"
+
+	"go.tkw01536.de/blog/generator/file"
 )
 
 var redirectTemplate = template.Must(template.New("").Parse(`<!DOCTYPE html><title>{{ . }}</title><meta http-equiv="refresh" content = "0;url={{.}}" />`))
 
-// NewRedirectScanner adds static html files that redirect from source to target
-func NewRedirectScanner(sourceToTarget map[string]string) Scanner {
+// Redirect adds static html files that redirect from source to target.
+func Redirect(sourceToTarget map[string]string) Scanner {
 	return redirectScanner(sourceToTarget)
 }
 
 type redirectScanner map[string]string
 
-func (scanner redirectScanner) Scan(ctx context.Context, logger *slog.Logger, files chan<- ScannedFile) error {
+func (scanner redirectScanner) Scan(ctx context.Context, logger *slog.Logger, files chan<- file.ScannedFile) error {
 	for source, target := range scanner {
 		var buffer bytes.Buffer
 		if err := redirectTemplate.Execute(&buffer, target); err != nil {
@@ -29,9 +31,9 @@ func (scanner redirectScanner) Scan(ctx context.Context, logger *slog.Logger, fi
 
 		path := strings.Trim(source, "/") + "/index.html"
 
-		file := ScannedFile{
-			FileWithMetadata: FileWithMetadata{
-				File: File{Path: path, Contents: buffer.Bytes()},
+		file := file.ScannedFile{
+			FileWithMetadata: file.FileWithMetadata{
+				File: file.File{Path: path, Contents: buffer.Bytes()},
 			},
 			Raw: true,
 		}

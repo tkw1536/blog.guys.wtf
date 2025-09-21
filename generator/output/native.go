@@ -1,7 +1,5 @@
-//spellchecker:words generator
-package generator
+package output
 
-//spellchecker:words context errors html template slog path filepath slices strings sync atomic
 import (
 	"context"
 	"errors"
@@ -12,27 +10,22 @@ import (
 	"slices"
 	"sync"
 	"sync/atomic"
+
+	"go.tkw01536.de/blog/generator/file"
 )
 
-// FileWriter is a function that writes a file to output.
-// Use [NewNativeFileWriter] for a default function.
-type FileWriter interface {
-	Reset() error
-	Write(ctx context.Context, logger *slog.Logger, file File) error
-}
-
-// NewNativeFileWriter creates a new [FileWriter] that writes to the given root as its' output directory.
+// Native creates a new [Output] that writes to the given path as its' output directory.
 //
 // Files outside the given directory are not tracked.
 // If cleanFirst is set to true, it cleans all files when first invoked.
-func NewNativeFileWriter(path string, cleanFirst bool) FileWriter {
-	return &nativeFileWriter{
+func Native(path string, cleanFirst bool) Output {
+	return &nativeWriter{
 		path:       path,
 		cleanFirst: cleanFirst,
 	}
 }
 
-type nativeFileWriter struct {
+type nativeWriter struct {
 	loaded atomic.Bool
 
 	m    sync.Mutex
@@ -42,7 +35,7 @@ type nativeFileWriter struct {
 	cleanFirst bool
 }
 
-func (nfw *nativeFileWriter) openRoot(logger *slog.Logger) (*os.Root, error) {
+func (nfw *nativeWriter) openRoot(logger *slog.Logger) (*os.Root, error) {
 	if !nfw.loaded.Load() {
 		return nfw.openRootSlow(logger)
 	}
@@ -50,7 +43,7 @@ func (nfw *nativeFileWriter) openRoot(logger *slog.Logger) (*os.Root, error) {
 	return nfw.root, nil
 }
 
-func (nfw *nativeFileWriter) openRootSlow(logger *slog.Logger) (*os.Root, error) {
+func (nfw *nativeWriter) openRootSlow(logger *slog.Logger) (*os.Root, error) {
 	nfw.m.Lock()
 	defer nfw.m.Unlock()
 
@@ -69,11 +62,11 @@ func (nfw *nativeFileWriter) openRootSlow(logger *slog.Logger) (*os.Root, error)
 	return nfw.root, nil
 }
 
-func (nfw *nativeFileWriter) Reset() error {
+func (nfw *nativeWriter) Reset() error {
 	return nil
 }
 
-func (nfw *nativeFileWriter) Write(ctx context.Context, logger *slog.Logger, file File) (e error) {
+func (nfw *nativeWriter) Write(ctx context.Context, logger *slog.Logger, file file.File) (e error) {
 	if err := ctx.Err(); err != nil {
 		return fmt.Errorf("context closed: %w", err)
 	}

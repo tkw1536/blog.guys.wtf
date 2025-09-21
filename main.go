@@ -6,7 +6,6 @@ import (
 	"cmp"
 	"context"
 	"fmt"
-	"generator/generator"
 	"html/template"
 	"log/slog"
 	"net/http"
@@ -14,6 +13,10 @@ import (
 	"os/signal"
 	"strings"
 	"time"
+
+	"go.tkw01536.de/blog/generator"
+	"go.tkw01536.de/blog/generator/output"
+	"go.tkw01536.de/blog/generator/scanner"
 
 	_ "embed"
 
@@ -37,9 +40,11 @@ var listHTML string
 var listTemplate = mustTemplate(listHTML, "list.html")
 
 var g = generator.Generator{
-	Inputs: []generator.Scanner{
-		generator.NewStaticScanner("static", []string{"_", "."}),
-		generator.NewMarkdownScanner(
+	Inputs: []scanner.Scanner{
+		scanner.Static("static", func(name string) bool {
+			return len(name) > 0 && name[0] == '_' || name[0] == '.'
+		}),
+		scanner.Markdown(
 			"content",
 			func(path string, Metadata map[string]any) bool {
 				return Metadata["draft"] != true
@@ -58,7 +63,7 @@ var g = generator.Generator{
 			//	html.WithUnsafe(),
 			),
 		),
-		generator.NewRedirectScanner(map[string]string{
+		scanner.Redirect(map[string]string{
 			// legacy URLs
 			"2016/02/01/curse-of-the-doctype": "/curse-of-the-doctype/",
 			"2016/09/28/a-rreally-bad-idea":   "/a-rreally-bad-idea/",
@@ -93,7 +98,7 @@ var g = generator.Generator{
 		generator.MinifyPostProcessor,
 	},
 
-	Output: generator.NewNativeFileWriter("public", true),
+	Output: output.Native("public", true),
 }
 
 func main() {
@@ -116,7 +121,7 @@ func main() {
 		var server http.Server
 		server.Addr = "localhost:8080"
 
-		g.Output, server.Handler = generator.NewServer()
+		g.Output, server.Handler = output.Server()
 
 		done := make(chan error, 1)
 		go func() {
